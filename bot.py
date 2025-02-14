@@ -92,7 +92,7 @@ async def select_level(update: Update, context: CallbackContext) -> int:
     level = update.message.text.upper()
     if level in ["A1", "A2", "B1", "B2"]:
         context.user_data["level"] = level 
-        await update.message.reply_text(f"You selected level {level}. Now, choose a topic:", reply_markup=get_topic_menu())
+        await update.message.reply_text(f"Вы выбрали уровень {level}. Теперь выберите тему:", reply_markup=get_topic_menu())
         return SELECT_TOPIC
     else:
         await update.message.reply_text("Invalid choice. Please select A1, A2, B1, or B2.")
