@@ -6,12 +6,14 @@ from dotenv import load_dotenv
 import os
 from openai import AsyncOpenAI
 import datetime
+from zoneinfo import ZoneInfo
 
 
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-
+# Define the Moscow timezone
+moscow_tz = ZoneInfo('Europe/Moscow')
 
 # Load environment variables
 load_dotenv()
@@ -193,9 +195,10 @@ def main():
     job_queue = application.job_queue
     job_queue.run_daily(
         send_daily_word,
-        time=datetime.time(hour=8, minute=0, tzinfo=datetime.timezone.utc)
+        time=datetime.time(hour=17, minute=50, tzinfo=moscow_tz)
     )
 
+    
     # Define conversation handler
     conversation_handler = ConversationHandler(
     entry_points=[CommandHandler("start", start)],
