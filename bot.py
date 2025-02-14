@@ -1,18 +1,22 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler, CallbackContext, JobQueue
 import os
 import logging
 from dotenv import load_dotenv
-import openai
 import os
+from openai import AsyncOpenAI
+import datetime
 
 
-# Load OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
+
 
 # Load environment variables
 load_dotenv()
 TELEGRAM_API_KEY = os.getenv("TELEGRAM_API_KEY")
+TELEGRAM_GROUP_CHAT_ID = os.getenv("TELEGRAM_GROUP_CHAT_ID")
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -51,7 +55,7 @@ def generate_question(topic: str, level: str) -> str:
     try:
         prompt = f"Generate a question in Spanish for student level {level} related to topic {topic}."
 
-        response = openai.chat.completions.create(# <-- Use ChatCompletion
+        response = client.chat.completions.create(# <-- Use ChatCompletion
             model="gpt-3.5-turbo",  # Model name
             messages=[
                 {"role": "user", "content": prompt}
@@ -67,7 +71,41 @@ def generate_question(topic: str, level: str) -> str:
         return None
 
 
+#generate a new word 
+
+async def generate_newword(bot):
+    try:
+        prompt = """
+        Your are a Spanish language teacher. Generate 1 common spanish expression/slang term from one of the following countries: Colombia, Spain, Mexico or Argentina. Make sure the expression/slang term is commonly used. Example: 
+        Expression: Parcero
+        Meaning: Parcero is a very common term in Colombia, especially among young people, to refer to a friend or someone close.
+        Example: ¿Qué más, parcero? ¿Vamos por un tinto? (What's up dude shall we go for a coffee?)
+        Country: Colombia
+        Tone: Informal, friendly, and colloquial.
+        """
+
+        response = await client.chat.completions.create(# <-- Use ChatCompletion
+            model="gpt-3.5-turbo",  # Model name
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=400,
+            temperature=0.7)
+
+        # Extract the response
+        generated_newword = response.choices[0].message.content.strip().split("\n")
+        await bot.send_message(  # <-- Fix syntax (no dot after await)
+            chat_id=TELEGRAM_GROUP_CHAT_ID, 
+            text=generated_newword
+        )
+        return generated_newword
+    except Exception as e:
+        logger.error(f"Error generating new word: {e}")
+        return None
+
+
 #HANDLING FUNCTIONS
+
 
 # Start function with menu
 async def start(update: Update, context: CallbackContext) -> int:
@@ -143,9 +181,20 @@ async def cancel(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text("Thanks for practicing! See you next time.")
     return ConversationHandler.END
 
+async def send_daily_word(context: CallbackContext):
+    """Send a new word to the group daily"""
+    await generate_newword(context.bot)
+
 # Main function
 def main():
     application = Application.builder().token(TELEGRAM_API_KEY).build()
+    
+    # Schedule daily word at 8 AM UTC
+    job_queue = application.job_queue
+    job_queue.run_daily(
+        send_daily_word,
+        time=datetime.time(hour=8, minute=0, tzinfo=datetime.timezone.utc)
+    )
 
     # Define conversation handler
     conversation_handler = ConversationHandler(
