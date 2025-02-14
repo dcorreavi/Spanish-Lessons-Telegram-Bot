@@ -95,7 +95,7 @@ async def select_level(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text(f"Вы выбрали уровень {level}. Теперь выберите тему:", reply_markup=get_topic_menu())
         return SELECT_TOPIC
     else:
-        await update.message.reply_text("Invalid choice. Please select A1, A2, B1, or B2.")
+        await update.message.reply_text("Неверный выбор. Пожалуйста, выберите A1, A2, B1, или B2.")
         return SELECT_LEVEL
 
 # Handle topic selection & send question
