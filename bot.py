@@ -81,7 +81,7 @@ async def button_click(update: Update, context: CallbackContext) -> int:
     await query.answer()
 
     if query.data == "start_lesson":
-        await query.message.edit_text("Отлично! Давайте начнем. Пожалуйста, выберите свой уровень: A1, A2, B1, or B2.")
+        await query.message.edit_text("Great! Давайте начнем. Пожалуйста, выберите свой уровень: A1, A2, B1, or B2.")
         return SELECT_LEVEL
     elif query.data == "end_session":
         await query.message.edit_text("Session ended. See you next time!")
