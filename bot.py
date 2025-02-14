@@ -195,7 +195,7 @@ def main():
     job_queue = application.job_queue
     job_queue.run_daily(
         send_daily_word,
-        time=datetime.time(hour=17, minute=50, tzinfo=moscow_tz)
+        time=datetime.time(hour=17, minute=55, tzinfo=moscow_tz)
     )
 
     
