@@ -108,7 +108,7 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
     context.user_data["topic"] = topic 
 
     # Confirm selection
-    await query.message.edit_text(f"Great! You chose {topic.replace('topic_', '').capitalize()}. Let's begin!")
+    await query.message.edit_text(f"Отлично! Вы выбрали {topic.replace('topic_', '').capitalize()}. Let's begin!")
 
     # Retrieve data
     level = context.user_data.get("level")
