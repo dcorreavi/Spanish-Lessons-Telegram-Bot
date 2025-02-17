@@ -60,9 +60,9 @@ async def generate_question(topic: str, level: str) -> str:
         logger.error(f"Error generating question: {e}")
         return None
 
-async def conversation_response(user_text) -> str:
+async def conversation_response(user_text):
     try:
-        prompt = f"Correct mistakes in {user_text} and make a comment followed by a question related to topic"
+        prompt = f"Correct mistakes in {user_text}." "Then, provide a brief comment and ask a related follow-up question."
         response = await client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
