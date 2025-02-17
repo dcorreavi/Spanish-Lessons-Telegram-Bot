@@ -1,32 +1,18 @@
-import asyncio
-import os
-from telegram import Bot
-from openai import AsyncOpenAI
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler, CallbackContext
+import logging
 from dotenv import load_dotenv
+import openai
+import os
 
 # Load environment variables from .env
 load_dotenv('/Users/danielcorrea/buzzspanish/.env')
 
 # Retrieve API keys and chat ID from environment variables
-TELEGRAM_API_KEY_DAILY_WORDS = os.getenv('TELEGRAM_API_KEY_DAILY_WORDS')
-TELEGRAM_GROUP_CHAT_ID = os.getenv('TELEGRAM_GROUP_CHAT_ID')  # e.g., '@spanishbuzz'
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Validate that required variables are set
-if not TELEGRAM_API_KEY_DAILY_WORDS:
-    raise ValueError("TELEGRAM_API_KEY_DAILY_WORDS is not set!")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is not set!")
-if not TELEGRAM_GROUP_CHAT_ID:
-    raise ValueError("TELEGRAM_GROUP_CHAT_ID is not set!")
-
-# Create the bot and OpenAI client instances
-bot = Bot(token=TELEGRAM_API_KEY_DAILY_WORDS)
-client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-
-chat_id = TELEGRAM_GROUP_CHAT_ID  # or use a numerical chat ID if needed
-
-async def generate_newword(bot):
+async def generate_newword():
     print("Starting to generate new word...", flush=True)
     prompt = """
     You are a Spanish language teacher. Generate 1 common Spanish expression/slang term from one of the following countries: Colombia, Spain, Mexico or Argentina. Make sure the expression/slang term is commonly used.
@@ -40,7 +26,7 @@ async def generate_newword(bot):
     """
     
     # Use the asynchronous version of the OpenAI API call
-    response = await client.chat.completions.acreate(
+    response = await openai.chat.completions.create(
         model="gpt-3.5-turbo",  # Model name
         messages=[{"role": "user", "content": prompt}],
         max_tokens=400,
@@ -50,17 +36,6 @@ async def generate_newword(bot):
     
     # Extract the response and split it by newlines
     generated_newword = response.choices[0].message.content.strip().split("\n")
-    
-    # Await the asynchronous Telegram bot send_message call
-    await bot.send_message(
-        chat_id=chat_id,
-        text="\n".join(generated_newword)
-    )
-    
     return generated_newword
 
-async def main():
-    await generate_newword(bot)
 
-if __name__ == '__main__':
-    asyncio.run(main())

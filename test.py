@@ -37,7 +37,7 @@ def generate_result(text):
             }}
             """
         response = openai.chat.completions.create(# <-- Use ChatCompletion
-            model="gpt-4.0",  # Model name
+            model="gpt-3.5-turbo",  # Model name
             messages=[
                 {"role": "system", "content": prompt}
             ],

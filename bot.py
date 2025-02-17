@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import openai
 import os
 
+from new_word import generate_newword
+
 
 # Load OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -18,7 +20,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Define states
-SELECT_LEVEL, START_LESSON, SELECT_TOPIC = range(3)
+SELECT_LEVEL, START_LESSON, SELECT_TOPIC, NEW_WORD = range(4)
 
 # User data storage
 user_data = {}
@@ -127,7 +129,7 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
         question_text = "\n".join(questions)
         await context.bot.send_message(
             chat_id=query.message.chat_id,  # <-- Added chat_id
-            text=f"Questions for {topic} (Level {level}):\n\n{question_text}"
+            text=f"{question_text}"
         )
     else:
         await context.bot.send_message(
@@ -136,6 +138,20 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
         )
 
     return ConversationHandler.END
+
+#Handle new word
+async def new_word_click(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    await query.answer()
+    if query.data =="new_word":
+        word = generate_newword()
+        if word:
+            word_text = "\n".join(word)
+            await context.bot.send_message(
+            chat_id=query.message.chat_id,  # <-- Added chat_id
+            text=f"{word_text}"
+            )
+            return ConversationHandler.END
 
 # End conversation
 async def cancel(update: Update, context: CallbackContext) -> int:
@@ -152,7 +168,8 @@ def main():
     states={
         START_LESSON: [CallbackQueryHandler(button_click)],
         SELECT_LEVEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_level)],
-        SELECT_TOPIC: [CallbackQueryHandler(select_topic)],  # Add this line
+        SELECT_TOPIC: [CallbackQueryHandler(select_topic)], 
+        NEW_WORD: [CallbackQueryHandler(new_word_click)],
     },
     fallbacks=[CommandHandler("cancel", cancel)]
 )
