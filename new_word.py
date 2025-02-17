@@ -5,7 +5,7 @@ from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
 # Load environment variables from .env
-load_dotenv()
+load_dotenv('/Users/danielcorrea/buzzspanish/.env')
 
 # Retrieve API keys and chat ID from environment variables
 TELEGRAM_API_KEY_DAILY_WORDS = os.getenv('TELEGRAM_API_KEY_DAILY_WORDS')
