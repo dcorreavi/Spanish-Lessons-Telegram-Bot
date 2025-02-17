@@ -33,7 +33,7 @@ def get_main_menu():
     keyboard = [
         [InlineKeyboardButton("📖 Start Lesson", callback_data="start_lesson")],
         [InlineKeyboardButton("❌ End Session", callback_data="end_session")],
-        [InlineKeyboardButton("❌ New Expression", callback_data="new_word")]
+        [InlineKeyboardButton("New Expression", callback_data="new_word")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -126,7 +126,7 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
 
     # Generate questions
-    questions = generate_question(topic, level)
+    questions = await generate_question(topic, level)
 
     if questions:
         question_text = "\n".join(questions)
@@ -149,13 +149,6 @@ async def new_word_click(update: Update, context: CallbackContext) -> int:
         word_text = "\n".join(word)
         await update.message.reply_text({word_text})
         return ConversationHandler.END
-    
-    # if word:
-    #     word_text = "\n".join(word)
-    #     await context.bot.send_message(
-    #         chat_id=query.message.chat_id,  # <-- Added chat_id
-    #         text=f"{word_text}"
-    #     )
 
 # End conversation
 async def cancel(update: Update, context: CallbackContext) -> int:
