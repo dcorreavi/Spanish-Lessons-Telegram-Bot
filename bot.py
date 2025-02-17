@@ -144,7 +144,7 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
 
 #Handle new word
 async def new_word_click(update: Update, context: CallbackContext) -> int:
-    word = generate_newword()
+    word = await generate_newword()
     if word:
         word_text = "\n".join(word)
         await update.message.reply_text({word_text})
