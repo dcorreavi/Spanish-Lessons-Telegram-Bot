@@ -15,14 +15,11 @@ print("Loaded API Key:", api_key)  # Should show your actual key (not placeholde
 
 # Initialize client
 client = AsyncOpenAI(api_key=api_key)  # Directly pass the key
-
-
-# openai's documentation
-# from openai import OpenAI
-# client = OpenAI()
+print("initialized client")
 
 
 async def generate_newword():
+    print("start generating word function")
     try:
         logger.info("Generating new word...")
         prompt = """
@@ -42,9 +39,11 @@ async def generate_newword():
             temperature=0.7
         )
         content = response.choices[0].message.content.strip()
+        print(f"{content}")
         return content.split("\n")
     except Exception as e:
         logger.error(f"Error generating word: {e}")
         return None
 
 asyncio.run(generate_newword())
+
