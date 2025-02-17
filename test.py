@@ -2,15 +2,15 @@ import logging
 from dotenv import load_dotenv
 import openai
 import os
+import json
 
 
 # Load OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-text =["I like play football"] 
 def generate_result(text):
     try:
-        prompt = """
+        prompt = f"""
         Analyze the Global Scale of English (GSE) level of a student based on their speech during the lesson.
             Provide a detailed assessment of their current GSE level, considering multiple aspects such as grammar, vocabulary, pronunciation, fluency, and clarity:
 
@@ -41,14 +41,18 @@ def generate_result(text):
             messages=[
                 {"role": "system", "content": prompt}
             ],
-            max_tokens=150,
-            temperature=0.7)
+            max_tokens=300,
+            temperature=0.5)
 
         # Extract the response
-        question = response.choices[0].message.content.strip().split("\n")
-        return question
+        result = json.loads(response.choices[0].message.content)
+        return result
     except Exception as e:
+        logging.error(f"Error: {e}")
         return None
 
+
+# Pass a string instead of a list
+text = "I like play football"
 result = generate_result(text)
 print(result)
