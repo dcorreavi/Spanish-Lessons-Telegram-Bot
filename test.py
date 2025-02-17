@@ -20,8 +20,7 @@ def generate_result(text):
             - Fluency: Measure the number of words spoken in 10 minutes and compare this to the standard word counts for different GSE levels (e.g., 800-1200 words).
             - Clarity: Assess the clarity of the student's speech and determine the appropriate GSE level.
 
-            Here is the student's speech for analysis:
-            {$text}
+            Here is the student's speech for analysis: {text}
 
             The response should be formatted in JSON
             Give the actual GSE levels for each assessed category, without ranges.
