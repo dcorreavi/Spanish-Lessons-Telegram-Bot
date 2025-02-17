@@ -2,16 +2,20 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler, CallbackContext
 import logging
 from dotenv import load_dotenv
-import openai
+from openai import AsyncOpenAI
 import os
 
 from new_word import generate_newword
 
 # Load environment variables
 load_dotenv()
+
 TELEGRAM_API_KEY = os.getenv("TELEGRAM_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = OPENAI_API_KEY
+api_key = os.getenv("OPENAI_API_KEY")
+print("Loaded API Key:", api_key)  # Should show your actual key (not placeholder)
+
+client = AsyncOpenAI(api_key=api_key)  # Directly pass the key
+print("initialized openai client")
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -24,8 +28,9 @@ SELECT_LEVEL, START_LESSON, SELECT_TOPIC = range(3)
 def get_main_menu():
     keyboard = [
         [InlineKeyboardButton("📖 Start Lesson", callback_data="start_lesson")],
-        [InlineKeyboardButton("❌ End Session", callback_data="end_session")],
-        [InlineKeyboardButton("New Expression", callback_data="new_word")]
+        [InlineKeyboardButton("🎉 New Expression", callback_data="new_word")],
+        [InlineKeyboardButton("❌ End Session", callback_data="end_session")]
+        
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -41,7 +46,7 @@ def get_topic_menu():
 async def generate_question(topic: str, level: str) -> str:
     try:
         prompt = f"Generate a question in Spanish for student level {level} related to topic {topic}."
-        response = await openai.ChatCompletion.acreate(
+        response = await client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=150,
