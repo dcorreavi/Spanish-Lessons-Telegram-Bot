@@ -1,4 +1,5 @@
-from openai import OpenAI
+from openai import AsyncOpenAI
+import asyncio
 import logging
 import os
 from dotenv import load_dotenv
@@ -9,24 +10,14 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Get the actual API key from environment variables
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
 
 
 # openai's documentation
 # from openai import OpenAI
 # client = OpenAI()
-
-
-completion = client.chat.completions.create(
-  model="gpt-4o-mini",
-  store=True,
-  messages=[
-    {"role": "user", "content": "write a haiku about ai"}
-  ]
-)
-
-print(completion.choices[0].message);
-
 
 
 async def generate_newword():
@@ -42,7 +33,7 @@ async def generate_newword():
         Country: Colombia
         Tone: Informal, friendly, and colloquial.
         """
-        response = await client.chat.completions.acreate(
+        response = await client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=400,
@@ -53,3 +44,5 @@ async def generate_newword():
     except Exception as e:
         logger.error(f"Error generating word: {e}")
         return None
+
+asyncio.run(generate_newword())
