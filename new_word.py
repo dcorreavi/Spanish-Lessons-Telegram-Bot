@@ -9,10 +9,12 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
-# Get the actual API key from environment variables
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Debug: Check if the key is loaded
+api_key = os.getenv("OPENAI_API_KEY")
+print("Loaded API Key:", api_key)  # Should show your actual key (not placeholder)
 
-
+# Initialize client
+client = AsyncOpenAI(api_key=api_key)  # Directly pass the key
 
 
 # openai's documentation
