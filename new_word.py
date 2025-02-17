@@ -21,8 +21,7 @@ async def generate_newword():
         Country: Colombia
         Tone: Informal, friendly, and colloquial.
         """
-        client = openai.AsyncOpenAI(api_key=OPENAI_API_KEY)
-        response = await client.chat.completions.create(
+        response = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=400,
