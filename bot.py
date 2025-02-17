@@ -22,7 +22,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Define states
-SELECT_LEVEL, START_LESSON, SELECT_TOPIC = range(3)
+SELECT_LEVEL, START_LESSON, SELECT_TOPIC, CONTINUE_CONVERSATION = range(4)
 
 # Menu Keyboard
 def get_main_menu():
@@ -33,6 +33,8 @@ def get_main_menu():
         
     ]
     return InlineKeyboardMarkup(keyboard)
+
+#SUPPORT FUNCTIONS
 
 def get_topic_menu():
     keyboard = [
@@ -57,6 +59,23 @@ async def generate_question(topic: str, level: str) -> str:
     except Exception as e:
         logger.error(f"Error generating question: {e}")
         return None
+
+async def conversation_response(user_text) -> str:
+    try:
+        prompt = f"Correct mistakes in {user_text} and make a comment followed by a question related to topic"
+        response = await client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=150,
+            temperature=0.7
+        )
+        reply = response.choices[0].message.content.strip().split("\n")
+        return reply
+    except Exception as e:
+        logger.error(f"Error generating question: {e}")
+        return None
+
+#HANDLING FUNCTIONS
 
 async def start(update: Update, context: CallbackContext) -> int:
     keyboard = get_main_menu()
@@ -114,6 +133,39 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
         await query.message.reply_text("Failed to generate questions. Try again later.")
     return ConversationHandler.END
 
+CONTINUE_CONVERSATION = range(1)
+
+async def continue_conversation(update: Update, context:CallbackContext) -> int:
+    print("start generating response function")
+    turns = context.user_data.get("turns", 0)
+    max_turns = 5
+
+    # Check if maximum turns reached
+    if turns >= max_turns:
+        await update.message.reply_text("Maximum conversation turns reached. Ending conversation.")
+        return ConversationHandler.END
+
+    try:
+        user_text = update.message.text
+        # Generate chatbot response with feedback and follow-up
+        response = await conversation_response(user_text)
+        if response:
+            # Increase turn count and store it back in user_data
+            context.user_data["turns"] = turns + 1
+            # Assume response is a list of strings. Adjust if necessary.
+            response_text = "\n".join(response)
+            await update.message.reply_text(response_text)
+        else:
+            await update.message.reply_text("Failed to generate response text. Try again later.")
+    except Exception as e:
+        logger.error(f"Error generating word: {e}")
+        return ConversationHandler.END
+
+    # Remain in the CONVERSING state to wait for the next message
+    return CONTINUE_CONVERSATION
+                                    
+
+
 async def cancel(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text("Thanks for practicing! See you next time.")
     return ConversationHandler.END
@@ -126,7 +178,8 @@ def main():
         states={
             START_LESSON: [CallbackQueryHandler(button_click)],
             SELECT_LEVEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_level)],
-            SELECT_TOPIC: [CallbackQueryHandler(select_topic)]
+            SELECT_TOPIC: [CallbackQueryHandler(select_topic)],
+            CONTINUE_CONVERSATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, continue_conversation)]
         },
         fallbacks=[CommandHandler("cancel", cancel)]
     )
