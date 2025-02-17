@@ -7,6 +7,8 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    logger.error("OPENAI_API_KEY is not set!")
 openai.api_key = OPENAI_API_KEY
 
 async def generate_newword():
