@@ -26,7 +26,7 @@ async def generate_newword():
     """
     
     # Use the asynchronous version of the OpenAI API call
-    response = await openai.chat.completions.create(
+    response = openai.chat.completions.create(
         model="gpt-3.5-turbo",  # Model name
         messages=[{"role": "user", "content": prompt}],
         max_tokens=400,
@@ -37,5 +37,6 @@ async def generate_newword():
     # Extract the response and split it by newlines
     generated_newword = response.choices[0].message.content.strip().split("\n")
     return generated_newword
+print(generate_newword)
 
 

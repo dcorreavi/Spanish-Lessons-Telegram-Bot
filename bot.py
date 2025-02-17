@@ -32,7 +32,8 @@ user_data = {}
 def get_main_menu():
     keyboard = [
         [InlineKeyboardButton("📖 Start Lesson", callback_data="start_lesson")],
-        [InlineKeyboardButton("❌ End Session", callback_data="end_session")]
+        [InlineKeyboardButton("❌ End Session", callback_data="end_session")],
+        [InlineKeyboardButton("❌ New Expression", callback_data="new_word")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -84,6 +85,8 @@ async def button_click(update: Update, context: CallbackContext) -> int:
     if query.data == "start_lesson":
         await query.message.edit_text("Great! Давайте начнем. Пожалуйста, выберите свой уровень: A1, A2, B1, or B2.")
         return SELECT_LEVEL
+    if query.data == "new_word":
+        return NEW_WORD
     elif query.data == "end_session":
         await query.message.edit_text("Session ended. See you next time!")
         return ConversationHandler.END
@@ -141,17 +144,11 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
 
 #Handle new word
 async def new_word_click(update: Update, context: CallbackContext) -> int:
-    query = update.callback_query
-    await query.answer()
-    if query.data =="new_word":
-        word = generate_newword()
-        if word:
-            word_text = "\n".join(word)
-            await context.bot.send_message(
-            chat_id=query.message.chat_id,  # <-- Added chat_id
-            text=f"{word_text}"
-            )
-            return ConversationHandler.END
+    word = generate_newword()
+    if word:
+        word_text = "\n".join(word)
+        await update.message.reply_text({word_text})
+        return ConversationHandler.END
 
 # End conversation
 async def cancel(update: Update, context: CallbackContext) -> int:
