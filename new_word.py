@@ -45,5 +45,6 @@ async def generate_newword():
         logger.error(f"Error generating word: {e}")
         return None
 
-asyncio.run(generate_newword())
+if __name__ == "__main__":
+    asyncio.run(generate_newword())
 
