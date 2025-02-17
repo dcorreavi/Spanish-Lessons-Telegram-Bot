@@ -60,18 +60,31 @@ async def generate_question(topic: str, level: str) -> str:
         logger.error(f"Error generating question: {e}")
         return None
 
-async def conversation_response(user_text):
+async def conversation_response(user_text,convo_topic):
     try:
-        prompt = f"Correct mistakes in {user_text}." "Then, provide a brief comment and ask a related follow-up question."
+        prompt = f"""
+You are a Spanish language teacher.
+
+User's Reply: "{user_text}"
+
+Instructions:
+1. If the user's reply contains any mistakes, correct them. If it's already correct, provide some encouraging feedback.
+2. After the correction or feedback, ask a question related to the {convo_topic} to keep the conversation going.
+3. Only use Spanish.
+
+Please format your response in two parts:
+- On the first line, write the corrected version (or your feedback if no corrections are needed).
+- On the next line, write your follow-up question.
+"""
         response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=150,
-            temperature=0.7
+            temperature=0.9
         )
         reply = response.choices[0].message.content.strip().split("\n")
         return reply
-    except Exception as e:
+    except Exception as e:  
         logger.error(f"Error generating question: {e}")
         return None
 
@@ -131,9 +144,8 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
         await query.message.reply_text(question_text)
     else:
         await query.message.reply_text("Failed to generate questions. Try again later.")
-    return ConversationHandler.END
+    return CONTINUE_CONVERSATION
 
-CONTINUE_CONVERSATION = range(1)
 
 async def continue_conversation(update: Update, context:CallbackContext) -> int:
     print("start generating response function")
@@ -146,9 +158,10 @@ async def continue_conversation(update: Update, context:CallbackContext) -> int:
         return ConversationHandler.END
 
     try:
+        convo_topic = context.user_data["topic"]
         user_text = update.message.text
         # Generate chatbot response with feedback and follow-up
-        response = await conversation_response(user_text)
+        response = await conversation_response(user_text, convo_topic)
         if response:
             # Increase turn count and store it back in user_data
             context.user_data["turns"] = turns + 1
