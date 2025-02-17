@@ -1,15 +1,33 @@
-import openai
+from openai import OpenAI
 import logging
 import os
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
+# Load environment variables from .env file
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    logger.error("OPENAI_API_KEY is not set!")
-openai.api_key = OPENAI_API_KEY
+
+# Get the actual API key from environment variables
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
+# openai's documentation
+# from openai import OpenAI
+# client = OpenAI()
+
+
+completion = client.chat.completions.create(
+  model="gpt-4o-mini",
+  store=True,
+  messages=[
+    {"role": "user", "content": "write a haiku about ai"}
+  ]
+)
+
+print(completion.choices[0].message);
+
+
 
 async def generate_newword():
     try:
@@ -24,7 +42,7 @@ async def generate_newword():
         Country: Colombia
         Tone: Informal, friendly, and colloquial.
         """
-        response = await openai.ChatCompletion.acreate(
+        response = await client.chat.completions.acreate(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=400,
