@@ -1,7 +1,12 @@
 import openai
 import logging
+import os
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+
+load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 async def generate_newword():
     try:
@@ -16,16 +21,15 @@ async def generate_newword():
         Country: Colombia
         Tone: Informal, friendly, and colloquial.
         """
-
-        response = await openai.ChatCompletion.create(
+        client = openai.AsyncOpenAI(api_key=OPENAI_API_KEY)
+        response = await client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=400,
             temperature=0.7
         )
-
-        return response.choices[0].message.content.strip().split("\n")
-
+        content = response.choices[0].message.content.strip()
+        return content.split("\n")
     except Exception as e:
         logger.error(f"Error generating word: {e}")
         return None
