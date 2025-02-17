@@ -149,6 +149,13 @@ async def new_word_click(update: Update, context: CallbackContext) -> int:
         word_text = "\n".join(word)
         await update.message.reply_text({word_text})
         return ConversationHandler.END
+    
+    # if word:
+    #     word_text = "\n".join(word)
+    #     await context.bot.send_message(
+    #         chat_id=query.message.chat_id,  # <-- Added chat_id
+    #         text=f"{word_text}"
+    #     )
 
 # End conversation
 async def cancel(update: Update, context: CallbackContext) -> int:

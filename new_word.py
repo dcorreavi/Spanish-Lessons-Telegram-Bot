@@ -37,6 +37,6 @@ async def generate_newword():
     # Extract the response and split it by newlines
     generated_newword = response.choices[0].message.content.strip().split("\n")
     return generated_newword
-print(generate_newword)
+    print(generated_newword)
 
 
