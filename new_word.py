@@ -1,4 +1,5 @@
 import random
+import re
 from openai import AsyncOpenAI
 import asyncio
 import logging
@@ -18,41 +19,81 @@ print("Loaded API Key:", api_key)  # Should show your actual key (not placeholde
 client = AsyncOpenAI(api_key=api_key)  # Directly pass the key
 print("initialized client")
 
+# Global cache for the last 5 generated expressions
+last_generated_expressions = []
+
+def extract_expression(content: str) -> str:
+    """
+    Extracts the expression from the generated text.
+    Assumes the generated text includes a line starting with "Expression:".
+    """
+    match = re.search(r'Expression:\s*(.+)', content)
+    if match:
+        return match.group(1).strip()
+    return None
 
 async def generate_newword():
     print("start generating word function")
-    try:
-        logger.info("Generating new word...")
+    max_attempts = 3  # Maximum attempts to get a non-duplicate expression
+    attempts = 0
 
-        # Randomly choose a country for more variation
-        countries = ["Colombia", "Spain", "Mexico", "Argentina"]
-        country_choice = random.choice(countries)
+    while attempts < max_attempts:
+        try:
+            logger.info("Generating new word...")
+            
+            # Randomly choose a country for more variation
+            countries = ["Colombia", "Spain", "Mexico", "Argentina"]
+            country_choice = random.choice(countries)
+            
+            prompt = f"""
+            You are a creative Spanish language teacher. Generate a fresh and unique Spanish expression or slang term from {country_choice}. Please provide the following details in your answer:
+            
+            - **Expression:** The Spanish expression or slang term.
+            - **Meaning:** A brief, friendly explanation of the expression.
+            - **Example:** A sentence showing how the expression is used in context.
+            - **Country:** {country_choice}
+            
+            Ensure the expression is commonly used and do not repeat previous responses.
+            """
+            
+            response = await client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=400,
+                temperature=0.9  # Increase temperature for more creative responses
+            )
+            
+            content = response.choices[0].message.content.strip()
+            expression = extract_expression(content)
+            
+            if expression:
+                if expression not in last_generated_expressions:
+                    # Save the new expression to the cache
+                    last_generated_expressions.append(expression)
+                    # Maintain only the last 5 entries
+                    if len(last_generated_expressions) > 5:
+                        last_generated_expressions.pop(0)
+                    print(f"Generated expression: {expression}")
+                    return content.split("\n")
+                else:
+                    attempts += 1
+                    logger.info(
+                        f"Duplicate expression found: {expression}. Retrying attempt {attempts}/{max_attempts}."
+                    )
+            else:
+                # If we can't extract an expression, log it and try again
+                attempts += 1
+                logger.info(
+                    f"Failed to extract expression. Retrying attempt {attempts}/{max_attempts}."
+                )
+        except Exception as e:
+            logger.error(f"Error generating word: {e}")
+            return None
 
-        prompt = f"""
-        You are a Spanish language teacher. Generate a common Spanish expression/slang term from {country_choice}. 
-
-        Example:
-        - **Expression**: Parcero
-        - **Meaning**: Parcero is a very common term in Colombia, especially among young people, to refer to a friend or someone close.
-        - **Example**: ¿Qué más, parcero? ¿Vamos por un tinto? (What's up dude, shall we go for a coffee?)
-        - **Country**: {country_choice}
-        - **Tone**: Informal, friendly, and colloquial.
-
-        Make sure the expression/slang term is commonly used.
-
-        """
-        response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=400,
-            temperature=0.9
-        )
-        content = response.choices[0].message.content.strip()
-        print(f"{content}")
-        return content.split("\n")
-    except Exception as e:
-        logger.error(f"Error generating word: {e}")
-        return None
+    # If after max_attempts we still get a duplicate or an error,
+    # return the last generated result anyway.
+    print("Max attempts reached; returning the latest generated content.")
+    return content.split("\n")
 
 if __name__ == "__main__":
     asyncio.run(generate_newword())
