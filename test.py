@@ -27,14 +27,14 @@ def generate_result(text):
             Dont give Detailed Assessment.
             Minimum GSE level is 10 so level should not be less than 10.
             Example Output Format:
-            {
-              'generalGse': '',
-              'grammar':  '',
-              'vocabulary':  '',
-              'pronunciation':  '',
-              'fluency':  '',
-              'clarity':  '',
-            }
+            {{
+              "generalGse": "",
+              "grammar":  "",
+              "vocabulary":  "",
+              "pronunciation":  "",
+              "fluency":  "",
+              "clarity":  "",
+            }}
             """
         response = openai.chat.completions.create(# <-- Use ChatCompletion
             model="gpt-4.0",  # Model name
