@@ -42,16 +42,17 @@ async def generate_newword():
             logger.info("Generating new word...")
             
             # Randomly choose a country for more variation
-            countries = ["Colombia", "Spain", "Mexico", "Argentina"]
+            countries = ["Colombia"]
             country_choice = random.choice(countries)
             
             prompt = f"""
             You are a creative Spanish language teacher. Generate a fresh and unique Spanish expression or slang term from {country_choice}. Please provide the following details in your answer:
             
-            - **Expression:** The Spanish expression or slang term.
-            - **Meaning:** A brief, friendly explanation of the expression.
-            - **Example:** A sentence showing how the expression is used in context.
-            - **Country:** {country_choice}
+            <b>Expression:</b> The Spanish expression or slang term.
+            <b>Meaning:</b> A brief, friendly explanation of the expression.
+            <b>Example:</b> A sentence showing how the expression is used in context.
+            <b>Translation:</b> Translation to English of the example.
+            <b>Country:</b> {country_choice}
             
             Ensure the expression is commonly used and do not repeat previous responses.
             """
