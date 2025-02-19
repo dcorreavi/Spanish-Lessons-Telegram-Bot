@@ -55,17 +55,37 @@ def store_message_history(user_id, user_text, context):
 async def generate_question(topic: str, level: str) -> str:
     try:
         prompt = f"""
-        
-        Generate a question in Spanish for student level {level} related to topic {topic}.
+
+        You are a Spanish teacher.
+
+        Instructions:
+        1. Generate a question in Spanish for student level {level} related to topic {topic}.
+        2. Translate the question into Russian
+        3. Include a hint on how the student can reply to the question.
+        5. Translate the hint into Russian.
+
+        Please return your answer as a valid JSON object with the following keys:
+        - "question"
+        - "question_translation"
+        - "hint"
+        - "hint_translation"
+
+        Example output:
+        {{
+        "question": "¿Qué opinas de ...?",
+        "question_translation": "Что вы думаете об ...?",
+        "hint": "||Yo pienso que ...||",
+        "hint_translation": "||я думаю что ...||"
+        }}
         
         """
-        response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
+        question = await client.chat.completions.create(
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=150,
             temperature=0.7
         )
-        question = response.choices[0].message.content.strip().split("\n")
+        print(question)
         return question
     except Exception as e:
         logger.error(f"Error generating question: {e}")
@@ -95,12 +115,24 @@ Please return your answer as a valid JSON object with the following keys:
 - "hint"
 - "hint_translation"
 
-Example input from student: Yo gustar correr mucho
+Example input from student with mistake: Yo gustar correr mucho
 
 
-Example output:
+Example output on input from student with mistake:
 {{
   "correction": "Me gusta correr mucho",
+  "question": "¿Qué opinas de ...?",
+  "question_translation": "Что вы думаете об ...?",
+  "hint": "||Yo pienso que ...||",
+  "hint_translation": "||я думаю что ...||"
+}}
+
+Example input from student without mistake: Yo quiero viajar a Colombia
+
+
+Example output on input from student without mistake:
+{{
+  "correction": "ответ без ошибок :) ",
   "question": "¿Qué opinas de ...?",
   "question_translation": "Что вы думаете об ...?",
   "hint": "||Yo pienso que ...||",
@@ -130,6 +162,15 @@ def format_to_markdown(response_json):
         f"**Перевод вопроса:** {response_json.get('question_translation', '')}\n"
         f"**Подсказки:** {response_json.get('hint', '')}\n"
         f"**Перевод подсказки:** {response_json.get('hint_translation', '')}"
+    )
+    return escaped_text
+
+def format_to_markdown_question(question):
+    escaped_text = (
+        f"**Вопрос:** {question.get('question', '')}\n"
+        f"**Перевод вопроса:** {question.get('question_translation', '')}\n"
+        f"**Подсказки:** {question.get('hint', '')}\n"
+        f"**Перевод подсказки:** {question.get('hint_translation', '')}"
     )
     return escaped_text
 
@@ -172,16 +213,24 @@ async def generate_feedback(chat_history):
     print(f"DEBUG: kicked off generate_feedback function with chat history: {chat_history}")
     try:
         prompt = f"""
-You are a Spanish language teacher.
+You are a Spanish language teacher. Below is the conversation history with a student: 
 
-Student's chat history: "{chat_history}"
+{chat_history}
 
-Instructions:
-1. Analyze the chat history and provide feedback. 
+Based on the conversation, please provide detailed and constructive feedback in Russian to help the student improve their Spanish. Your feedback should include:
 
-Please structure your response this way:
-*Strengths:* Mention a couple of good language uses from the chat history. 
-*New Language:* Write new words or phrases the student can use next time to improve their spanish skills. Include a translation for each word/phrase in parenthesis.
+1. Strengths: Highlight at least two strengths in the student's language usage.
+2. Areas for Improvement: Point out any mistakes or areas for improvement (e.g., grammar, vocabulary, syntax) and provide corrections.
+3. New Vocabulary: Recommend two or three new words or phrases the student could learn, along with their translations.
+
+Example output:
+
+<b>Сильные стороны:</b> Вы продемонстрировали четкую структуру предложения и эффективное использование прилагательных.
+<b>Над чем работать:</b> Будьте осторожны с глагольными спряжениями; например, используйте "me gusta" вместо "yo gustar".
+<b>Новые слова:</b> 
+desafiante: испытывающий,
+oportunidad:возможность
+
 """
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
@@ -205,7 +254,7 @@ async def give_feedback(update: Update, context: CallbackContext):
 
     feedback_text = "\n".join(feedback_response)
     
-    await update.message.reply_text(feedback_text)
+    await update.message.reply_text(feedback_text, parse_mode="HTML")
     return ConversationHandler.END
 
 #HANDLING FUNCTIONS
@@ -264,8 +313,22 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
 
     questions = await generate_question(topic, level)
     if questions:
-        question_text = "\n".join(questions)
-        await query.message.reply_text(question_text)
+
+        # Extract the content from the API response (assumes OpenAI's response format)
+            question_text = questions.choices[0].message.content
+            print(f"this is the question_text {question_text}")
+
+            # Parse the JSON string returned by the model
+            response_data_question = json.loads(question_text)
+
+             # Format the parsed JSON into MarkdownV2
+            formatted_question = format_to_markdown_question(response_data_question)
+            print(f"this is the formatted_question: {formatted_question}")
+
+            escaped_question = escape_markdown_v2(formatted_question)
+            print(f"this is the escaped_question: {escaped_question}")
+            
+            await query.message.reply_text(escaped_question, parse_mode="MarkdownV2")
     else:
         await query.message.reply_text("Failed to generate questions. Try again later.")
     return CONTINUE_CONVERSATION
