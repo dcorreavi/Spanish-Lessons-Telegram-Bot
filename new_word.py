@@ -49,7 +49,7 @@ async def generate_newword():
             You are a creative Spanish language teacher. Generate a fresh and unique Spanish expression or slang term from {country_choice}. Please provide the following details in your answer:
             
             <b>Выражение:</b> The Spanish expression or slang term.
-            <b>Значение:</b> A brief, friendly explanation of the expression in russian.
+            <b>Значение:</b> A brief, friendly explanation of the expression in russian language.
             <b>Пример:</b> A sentence showing how the expression is used in context.
             <b>Перевод:</b> Translation to Russian of the example.
             <b>Страна:</b> {country_choice}
