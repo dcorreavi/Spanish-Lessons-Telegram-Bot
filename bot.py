@@ -1,5 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler, CallbackContext
+from telegram.constants import ChatAction
 import logging
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
@@ -248,6 +249,8 @@ oportunidad:возможность
 async def give_feedback(update: Update, context: CallbackContext):
     print("start generating feedback function")
 
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+
     chat_history = context.user_data.get("message_history", [])
 
     feedback_response = await generate_feedback(chat_history)
@@ -310,6 +313,8 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
     if not level:
         await query.message.reply_text("Error: Отсутствует уровень. Перезапустить с /start.")
         return ConversationHandler.END
+    
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
     questions = await generate_question(topic, level)
     if questions:
@@ -336,6 +341,8 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
 
 async def continue_conversation(update: Update, context: CallbackContext) -> int:
     print("start generating response function")
+
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
     # First, store the message
     user_text = update.message.text
