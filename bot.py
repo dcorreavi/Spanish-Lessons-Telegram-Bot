@@ -28,8 +28,8 @@ SELECT_LEVEL, START_LESSON, SELECT_TOPIC, CONTINUE_CONVERSATION, GIVE_FEEDBACK =
 # Menu Keyboard
 def get_main_menu():
     keyboard = [
-        [InlineKeyboardButton("📖 Start Lesson", callback_data="start_lesson")],
-        [InlineKeyboardButton("❌ End Session", callback_data="end_session")]
+        [InlineKeyboardButton("📖 Начать урок", callback_data="start_lesson")],
+        [InlineKeyboardButton("❌ Конец урока", callback_data="end_session")]
         
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -38,10 +38,10 @@ def get_main_menu():
 
 def get_topic_menu():
     keyboard = [
-        [InlineKeyboardButton("🌍 Travel", callback_data="topic_travel")],
-        [InlineKeyboardButton("🍽️ Food", callback_data="topic_food")],
-        [InlineKeyboardButton("💼 Work", callback_data="topic_work")],
-        [InlineKeyboardButton("🎉 Hobbies", callback_data="topic_hobbies")]
+        [InlineKeyboardButton("🌍 Путешествие", callback_data="topic_travel")],
+        [InlineKeyboardButton("🍽️ Еда", callback_data="topic_food")],
+        [InlineKeyboardButton("💼 Работа", callback_data="topic_work")],
+        [InlineKeyboardButton("🎉 Увлечения", callback_data="topic_hobbies")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -60,13 +60,11 @@ async def generate_question(topic: str, level: str) -> str:
         logger.error(f"Error generating question: {e}")
         return None
 
-async def conversation_response(user_text,convo_topic):
+async def conversation_response(user_text,convo_topic, chat_history):
     print(f"DEBUG: Retrieved topic from context.user_data: {convo_topic}")
     try:
         prompt = f"""
-You are a Spanish language teacher.
-
-User's Reply: "{user_text}"
+You are a Spanish language teacher. Answer to the student's "{user_text}". 
 
 Instructions:
 1. If the user's reply contains any mistakes, correct them. If it's already correct, provide some encouraging feedback.
@@ -74,13 +72,14 @@ Instructions:
 3. Give a hint how to reply.
 
 Please structure your response this way:
-*Correction:* Write the corrected version. Skip if the reply was correct.
-*Question:* Write your follow-up question.
-Question Translation: Translation to English of the question.
-*Hint:* ||_Write a phrase in Spanish the learner can use to reply_|| ||_translation of the hint phrase to English_||
+*Исправление:* If the student's "{user_text}" has a mistake then write the corrected version. Otherwise skip this line.
+*Вопрос:* Write your follow-up question. Take into account the conversation context in "{chat_history}"
+*Перевод вопроса:* Translation to English of the question.
+*Подсказки:* ||Write a phrase in Spanish the learner can use to reply|| 
+*Перевод подсказки:*||translation of the hint phrase to Russian||
 """
         response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=150,
             temperature=1.0
@@ -173,9 +172,9 @@ async def new_word_button(update: Update, context: CallbackContext) -> int:
 async def start(update: Update, context: CallbackContext) -> int:
     context.user_data["turns"] = 0
     context.user_data["message_history"] = []
-    
+
     keyboard = get_main_menu()
-    await update.message.reply_text("Welcome to the Spanish Practice Bot! Click start to start your lesson", reply_markup=keyboard)
+    await update.message.reply_text("Добро пожаловать в Spanish Practice Bot! Нажмите «Старт», чтобы начать урок", reply_markup=keyboard)
     return START_LESSON
 
 async def button_click(update: Update, context: CallbackContext) -> int:
@@ -183,7 +182,7 @@ async def button_click(update: Update, context: CallbackContext) -> int:
     await query.answer()
 
     if query.data == "start_lesson":
-        await query.message.edit_text("Great! Let's start. Please select your level: A1, A2, B1, or B2.")
+        await query.message.edit_text("Отлично! Давайте начнем. Пожалуйста, выберите свой уровень: A1, A2, B1, or B2.")
         return SELECT_LEVEL
     elif query.data == "end_session":
         await query.message.edit_text("Session ended. See you next time!")
@@ -193,10 +192,10 @@ async def select_level(update: Update, context: CallbackContext) -> int:
     level = update.message.text.upper()
     if level in ["A1", "A2", "B1", "B2"]:
         context.user_data["level"] = level
-        await update.message.reply_text(f"You selected level {level}. Now choose a topic:", reply_markup=get_topic_menu())
+        await update.message.reply_text(f"Вы выбрали уровень {level}. Теперь выберите тему:", reply_markup=get_topic_menu())
         return SELECT_TOPIC
     else:
-        await update.message.reply_text("Invalid choice. Please choose A1, A2, B1, or B2.")
+        await update.message.reply_text("Неверный выбор. Пожалуйста, выберите A1, A2, B1, or B2.")
         return SELECT_LEVEL
 
 async def select_topic(update: Update, context: CallbackContext) -> int:
@@ -206,11 +205,11 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
     topic = query.data.replace("topic_", "").capitalize()
     context.user_data["topic"] = topic
 
-    await query.message.edit_text(f"Great! You chose {topic}. Let's begin!")
+    await query.message.edit_text(f"Отлично! Вы выбрали {topic}. Начнем!")
 
     level = context.user_data.get("level")
     if not level:
-        await query.message.reply_text("Error: Missing level. Restart with /start.")
+        await query.message.reply_text("Error: Отсутствует уровень. Перезапустить с /start.")
         return ConversationHandler.END
 
     questions = await generate_question(topic, level)
@@ -239,7 +238,7 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
 
     # Check if maximum turns reached
     if turns >= max_turns:
-        await update.message.reply_text("Good job! Let's give you some feedback on this conversation.")
+        await update.message.reply_text("Хорошая работа! Давайте дадим вам обратную связь по этому разговору.")
         return await give_feedback(update, context)
 
     try:
@@ -270,7 +269,7 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
                                 
 
 async def cancel(update: Update, context: CallbackContext) -> int:
-    await update.message.reply_text("Thanks for practicing! See you next time.")
+    await update.message.reply_text("Спасибо за практику! Увидимся в следующий раз.")
     return ConversationHandler.END
 
 def main():
