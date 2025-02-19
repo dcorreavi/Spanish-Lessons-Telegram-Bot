@@ -4,6 +4,7 @@ import logging
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 import os
+import json
 
 from new_word import generate_newword
 
@@ -53,7 +54,11 @@ def store_message_history(user_id, user_text, context):
 
 async def generate_question(topic: str, level: str) -> str:
     try:
-        prompt = f"Generate a question in Spanish for student level {level} related to topic {topic}."
+        prompt = f"""
+        
+        Generate a question in Spanish for student level {level} related to topic {topic}.
+        
+        """
         response = await client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
@@ -70,58 +75,97 @@ async def conversation_response(user_text,convo_topic, chat_history):
     print(f"DEBUG: Retrieved topic from context.user_data: {convo_topic}")
     try:
         prompt = f"""
-You are a Spanish language teacher. Answer to the student's "{user_text}". 
+You are a Spanish language teacher. Consider the following conversation context:
+{chat_history}
+
+A student recently said: "{user_text}"
+The topic is: "{convo_topic}"
 
 Instructions:
-1. If the user's reply contains any mistakes, correct them. If it's already correct, provide some encouraging feedback.
-2. Then ask a question related to the "{convo_topic}" to keep the conversation going.
-3. Give a hint how to reply.
+1. Analyze the student's reply. If there are any mistakes, provide corrections; otherwise, leave the correction field empty.
+2. Ask a follow-up question in Spanish that continues the conversation, taking into account the above context.
+3. Translate the follow-up question into Russian.
+4. Provide a hint for the student on how to respond in Spanish.
+5. Translate the hint into Russian.
 
-Please structure your response this way:
-*Исправление:* If the student's "{user_text}" has a mistake then write the corrected version. Otherwise skip this line.
-*Вопрос:* Write your follow-up question. Take into account the conversation context in "{chat_history}"
-*Перевод вопроса:* Translation to English of the question.
-*Подсказки:* ||Write a phrase in Spanish the learner can use to reply|| 
-*Перевод подсказки:*||translation of the hint phrase to Russian||
+Please return your answer as a valid JSON object with the following keys:
+- "correction"
+- "question"
+- "question_translation"
+- "hint"
+- "hint_translation"
+
+Example input from student: Yo gustar correr mucho
+
+
+Example output:
+{{
+  "correction": "Me gusta correr mucho",
+  "question": "¿Qué opinas de ...?",
+  "question_translation": "Что вы думаете об ...?",
+  "hint": "||Yo pienso que ...||",
+  "hint_translation": "||я думаю что ...||"
+}}
 """
-        response = await client.chat.completions.create(
+
+        response_json = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=150,
             temperature=1.0
         )
-        reply = response.choices[0].message.content.strip().split("\n")
-        print(reply)
-        return reply
+        # response_json = response.choices[0].message.content.strip().split("\n")
+        print(response_json)
+        return response_json
     except Exception as e:  
         logger.error(f"Error generating question: {e}")
         return None
 
 import re
 
-def escape_markdown(text: str) -> str:
-    """Escape special characters for Telegram MarkdownV2, preserving bold and spoiler syntax."""
-    # Temporarily replace markdown syntax with placeholders
-    # Handle bold: **text**
-    text = re.sub(r'\*\*(.+?)\*\*', r'TEMP_BOLD_START\1TEMP_BOLD_END', text, flags=re.DOTALL)
-    # Handle spoiler: ||text||
-    text = re.sub(r'\|\|(.+?)\|\|', r'TEMP_SPOILER_START\1TEMP_SPOILER_END', text, flags=re.DOTALL)
-    
-    # Escape all special characters except the placeholders
-    # Create a regex pattern to match special characters but exclude placeholders
-    special_chars = r"_*[]()~`>#+-=|{}.!¡"
-    placeholder_pattern = r'TEMP_(BOLD|SPOILER)_(START|END)'
-    escaped_text = re.sub(
-        rf"({placeholder_pattern}|[{re.escape(special_chars)}])",
-        lambda match: match.group(0) if re.match(placeholder_pattern, match.group(0)) else f"\\{match.group(0)}",
-        text
+def format_to_markdown(response_json):
+    escaped_text = (
+        f"**Исправление:** {response_json.get('correction', '')}\n"
+        f"**Вопрос:** {response_json.get('question', '')}\n"
+        f"**Перевод вопроса:** {response_json.get('question_translation', '')}\n"
+        f"**Подсказки:** {response_json.get('hint', '')}\n"
+        f"**Перевод подсказки:** {response_json.get('hint_translation', '')}"
     )
+    return escaped_text
+
+def escape_markdown_v2(text: str) -> str:
+    """
+    Escapes all special characters required by Telegram MarkdownV2,
+    except for bold (**...**) and spoiler (||...||) formatting markers.
     
-    # Restore placeholders to original markdown syntax
-    escaped_text = escaped_text.replace('TEMP_BOLD_START', '**').replace('TEMP_BOLD_END', '**')
-    escaped_text = escaped_text.replace('TEMP_SPOILER_START', '||').replace('TEMP_SPOILER_END', '||')
+    The characters that must be escaped in MarkdownV2 are:
+    _ * [ ] ( ) ~ ` > # + - = | { } . !
+    """
+    # Placeholders to preserve our formatting markers
+    bold_placeholder = "BOLDPLACEHOLDER"
+    spoiler_placeholder = "SPOILERPLACEHOLDER"
+    
+    # Replace the markers with placeholders so they won't be escaped
+    text = text.replace("**", bold_placeholder)
+    text = text.replace("||", spoiler_placeholder)
+    
+    # The list of special characters as defined by Telegram MarkdownV2
+    special_chars = r"_*[]()~`>#+-=|{}.!"
+    
+    # Build the escaped text character by character
+    escaped_text = ""
+    for char in text:
+        if char in special_chars:
+            escaped_text += "\\" + char
+        else:
+            escaped_text += char
+            
+    # Restore the original formatting markers from placeholders
+    escaped_text = escaped_text.replace(bold_placeholder, "**")
+    escaped_text = escaped_text.replace(spoiler_placeholder, "||")
     
     return escaped_text
+
 
 
 async def generate_feedback(chat_history):
@@ -140,7 +184,7 @@ Please structure your response this way:
 *New Language:* Write new words or phrases the student can use next time to improve their spanish skills. Include a translation for each word/phrase in parenthesis.
 """
         response = await client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=300,
             temperature=0.9
@@ -254,17 +298,24 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
             # Increase turn count and store it back in user_data
             context.user_data["turns"] = turns + 1
 
-            # Assume response is a list of strings. Adjust if necessary.
-            response_text = "\n".join(response)
-            # Escape the response text to make it MarkdownV2 safe
-            escaped_response_text = escape_markdown(response_text)
-            print(escaped_response_text)
+            # Extract the content from the API response (assumes OpenAI's response format)
+            response_text = response.choices[0].message.content
+            print(f"this is the response_text {response_text}")
 
-            await update.message.reply_text(escaped_response_text, parse_mode="MarkdownV2")
+            # Parse the JSON string returned by the model
+            response_data = json.loads(response_text)
+
+             # Format the parsed JSON into MarkdownV2
+            formatted_response = format_to_markdown(response_data)
+            print(f"this is the formatted response: {formatted_response}")
+
+            escaped_response = escape_markdown_v2(formatted_response)
+
+            await update.message.reply_text(escaped_response, parse_mode="MarkdownV2")
         else:
             await update.message.reply_text("Failed to generate response text. Try again later.")
     except Exception as e:
-        logger.error(f"Error generating word: {e}")
+        logger.error(f"Error generating response: {e}")
         return ConversationHandler.END
 
     # Remain in the CONVERSING state to wait for the next message

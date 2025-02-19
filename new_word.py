@@ -27,7 +27,7 @@ def extract_expression(content: str) -> str:
     Extracts the expression from the generated text.
     Assumes the generated text includes a line starting with "Expression:".
     """
-    match = re.search(r'Expression:\s*(.+)', content)
+    match = re.search(r'Выражение:\s*(.+)', content)
     if match:
         return match.group(1).strip()
     return None
@@ -48,17 +48,17 @@ async def generate_newword():
             prompt = f"""
             You are a creative Spanish language teacher. Generate a fresh and unique Spanish expression or slang term from {country_choice}. Please provide the following details in your answer:
             
-            <b>Expression:</b> The Spanish expression or slang term.
-            <b>Meaning:</b> A brief, friendly explanation of the expression.
-            <b>Example:</b> A sentence showing how the expression is used in context.
-            <b>Translation:</b> Translation to English of the example.
-            <b>Country:</b> {country_choice}
+            <b>Выражение:</b> The Spanish expression or slang term.
+            <b>Значение:</b> A brief, friendly explanation of the expression in russian.
+            <b>Пример:</b> A sentence showing how the expression is used in context.
+            <b>Перевод:</b> Translation to Russian of the example.
+            <b>Страна:</b> {country_choice}
             
             Ensure the expression is commonly used and do not repeat previous responses.
             """
             
             response = await client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=400,
                 temperature=0.9  # Increase temperature for more creative responses
@@ -66,6 +66,7 @@ async def generate_newword():
             
             content = response.choices[0].message.content.strip()
             expression = extract_expression(content)
+            print(f"these are the last 5 expressions: {last_generated_expressions}")
             
             if expression:
                 if expression not in last_generated_expressions:
