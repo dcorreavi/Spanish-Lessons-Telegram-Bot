@@ -171,6 +171,9 @@ async def new_word_button(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
 
 async def start(update: Update, context: CallbackContext) -> int:
+    context.user_data["turns"] = 0
+    context.user_data["message_history"] = []
+    
     keyboard = get_main_menu()
     await update.message.reply_text("Welcome to the Spanish Practice Bot! Click start to start your lesson", reply_markup=keyboard)
     return START_LESSON
@@ -232,7 +235,7 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
     store_message_history(update.message.from_user.id, user_text, context)
 
     turns = context.user_data.get("turns", 0)
-    max_turns = 3
+    max_turns = 5
 
     # Check if maximum turns reached
     if turns >= max_turns:
