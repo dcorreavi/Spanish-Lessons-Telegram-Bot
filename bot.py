@@ -45,6 +45,12 @@ def get_topic_menu():
     ]
     return InlineKeyboardMarkup(keyboard)
 
+def store_message_history(user_id, user_text, context):
+    """Store message history in user_data."""
+    if "message_history" not in context.user_data:
+        context.user_data["message_history"] = []
+    context.user_data["message_history"].append(user_text)
+
 async def generate_question(topic: str, level: str) -> str:
     try:
         prompt = f"Generate a question in Spanish for student level {level} related to topic {topic}."
@@ -68,7 +74,7 @@ You are a Spanish language teacher. Answer to the student's "{user_text}".
 
 Instructions:
 1. If the user's reply contains any mistakes, correct them. If it's already correct, provide some encouraging feedback.
-2. Then ask a question related to the {convo_topic} to keep the conversation going.
+2. Then ask a question related to the "{convo_topic}" to keep the conversation going.
 3. Give a hint how to reply.
 
 Please structure your response this way:
@@ -220,11 +226,6 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
         await query.message.reply_text("Failed to generate questions. Try again later.")
     return CONTINUE_CONVERSATION
 
-def store_message_history(user_id, user_text, context):
-    """Store message history in user_data."""
-    if "message_history" not in context.user_data:
-        context.user_data["message_history"] = []
-    context.user_data["message_history"].append(user_text)
 
 async def continue_conversation(update: Update, context: CallbackContext) -> int:
     print("start generating response function")
@@ -232,6 +233,8 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
     # First, store the message
     user_text = update.message.text
     store_message_history(update.message.from_user.id, user_text, context)
+
+    chat_history = context.user_data.get("message_history", [])
 
     turns = context.user_data.get("turns", 0)
     max_turns = 5
@@ -246,7 +249,7 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
         user_text = update.message.text
 
         # Generate chatbot response with feedback and follow-up
-        response = await conversation_response(user_text, convo_topic)
+        response = await conversation_response(user_text, convo_topic, chat_history)
         if response:
             # Increase turn count and store it back in user_data
             context.user_data["turns"] = turns + 1
