@@ -34,6 +34,7 @@ def extract_expression(content: str) -> str:
 
 async def generate_newword():
     print("start generating word function")
+
     max_attempts = 3  # Maximum attempts to get a non-duplicate expression
     attempts = 0
 

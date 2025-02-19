@@ -263,6 +263,7 @@ async def give_feedback(update: Update, context: CallbackContext):
 #HANDLING FUNCTIONS
 
 async def new_word_button(update: Update, context: CallbackContext) -> int:
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
     new_word = await generate_newword()
     if new_word:
         new_word_text = "\n".join(new_word)
