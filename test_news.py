@@ -5,11 +5,11 @@ from openai import AsyncOpenAI
 import os
 import json
 import asyncio
-import time  # Optional: for small delays between messages
+import time
 from datetime import datetime, timedelta
-from dateutil import parser 
-
-
+from dateutil import parser
+from dotenv import load_dotenv  # <-- Add this
+load_dotenv()  # <-- Add this
 
 telegram_bot_token = "TELEGRAM_API_KEY"
 telegram_chat_id = "TELEGRAM_CHAT_ID"
