@@ -11,51 +11,8 @@ from dateutil import parser
 from dotenv import load_dotenv  # <-- Add this
 load_dotenv()  # <-- Add this
 
-telegram_bot_token =  os.getenv("TELEGRAM_BOT_TOKEN")
+telegram_bot_token =  os.getenv("TELEGRAM_API_KEY")
 telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
-
-# Add this before using Telegram variables
-print("[DEBUG] Telegram Bot Token:", repr(os.getenv("TELEGRAM_BOT_TOKEN")))
-print("[DEBUG] Telegram Chat ID:", repr(os.getenv("TELEGRAM_CHAT_ID")))
-
-def test_bot_token():
-    url = f"https://api.telegram.org/bot{telegram_bot_token}/getMe"
-    response = requests.get(url)
-    print("Bot Token Test:", response.json())
-
-def test_chat_id():
-    url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMessage"
-    payload = {
-        "chat_id": telegram_chat_id,
-        "text": "Simplest possible test message"
-    }
-    response = requests.post(url, data=payload)
-    print("Chat ID Test:", response.json())
-
-
-def find_chat_id():
-    url = f"https://api.telegram.org/bot{telegram_bot_token}/getUpdates"
-    response = requests.get(url)
-    print("All Chat IDs:", response.json())
-
-def debug_telegram():
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    
-    print(f"Token (first 10 chars): {repr(bot_token[:10]) if bot_token else 'MISSING'}")
-    print(f"Chat ID: {repr(chat_id)}")
-    
-    # Test bot token validity
-    token_test = requests.get(f"https://api.telegram.org/bot{bot_token}/getMe").json()
-    print("\nToken test result:", token_test)
-    
-    # Test chat ID validity (only if token works)
-    if token_test.get("ok"):
-        msg_test = requests.post(
-            f"https://api.telegram.org/bot{bot_token}/sendMessage",
-            data={"chat_id": chat_id, "text": "Test"}
-        ).json()
-        print("\nChat ID test result:", msg_test)
 
 # Load API keys from environment variables
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -263,10 +220,6 @@ def send_articles_to_telegram(articles, bot_token, chat_id):
 
 if __name__ == "__main__":
     
-    debug_telegram()
-    test_bot_token()
-    test_chat_id()
-    find_chat_id()
     # 1. Fetch all articles from the feeds.
     all_articles = fetch_all_feeds(feed_urls, keywords1, keywords2)
     
