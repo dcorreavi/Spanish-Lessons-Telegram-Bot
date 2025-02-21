@@ -10,16 +10,16 @@ from datetime import datetime, timedelta
 from dateutil import parser 
 
 
-# Load API keys from environment variables
-openai_api_key = os.getenv("OPENAI_API_KEY")
+
 telegram_bot_token = "TELEGRAM_API_KEY"
 telegram_chat_id = "TELEGRAM_CHAT_ID"
 
+
+# Load API keys from environment variables
+openai_api_key = os.getenv("OPENAI_API_KEY")
 # Ensure the key is loaded
 if openai_api_key is None:
     raise ValueError("OPENAI_API_KEY not found in environment variables")
-
-
 # Initialize OpenAI async client
 client = AsyncOpenAI(api_key=openai_api_key)
 
