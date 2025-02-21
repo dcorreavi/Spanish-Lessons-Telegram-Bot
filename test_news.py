@@ -233,6 +233,9 @@ def send_articles_to_telegram(articles, bot_token, chat_id):
         time.sleep(1)
 
 if __name__ == "__main__":
+    
+    test_bot_token()
+    test_chat_id()
     # 1. Fetch all articles from the feeds.
     all_articles = fetch_all_feeds(feed_urls, keywords1, keywords2)
     
