@@ -17,7 +17,7 @@ telegram_chat_id = "TELEGRAM_CHAT_ID"
 
 
 # Initialize OpenAI async client
-client = AsyncOpenAI(api_key="OPENAI_API_KEY")
+client = AsyncOpenAI(api_key=openai_api_key)
 
 
 # Global set to store URLs of processed articles
