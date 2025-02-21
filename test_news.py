@@ -1,8 +1,8 @@
-import os
 import feedparser
 import requests
 from lxml import etree
 from openai import AsyncOpenAI
+import os
 import json
 import asyncio
 import time  # Optional: for small delays between messages
@@ -14,6 +14,10 @@ from dateutil import parser
 openai_api_key = os.getenv("OPENAI_API_KEY")
 telegram_bot_token = "TELEGRAM_API_KEY"
 telegram_chat_id = "TELEGRAM_CHAT_ID"
+
+# Ensure the key is loaded
+if openai_api_key is None:
+    raise ValueError("OPENAI_API_KEY not found in environment variables")
 
 
 # Initialize OpenAI async client
