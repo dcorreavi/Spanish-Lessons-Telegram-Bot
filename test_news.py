@@ -128,20 +128,20 @@ feed_urls = [
     "https://thecitypaperbogota.com/feed/"
     "https://vivirenelpoblado.com/feed/"
     "https://www.eltiempo.com/rss/colombia.xml",
-    "https://www.eltiempo.com/rss/vida.xml",
-    "https://www.eltiempo.com/rss/colombia_barranquilla.xml",
-    "https://www.eltiempo.com/rss/colombia_medellin.xml",
-    "https://www.eltiempo.com/rss/colombia_cali.xml",
-    "https://www.eltiempo.com/rss/colombia_otras-ciudades.xml",
-    "https://www.eltiempo.com/rss/bogota.xml",
-    "https://www.eltiempo.com/rss/politica.xml",
-    "https://www.eltiempo.com/rss/economia_empresas.xml",   
-    "https://www.eltiempo.com/rss/deportes.xml",
-    "https://www.eltiempo.com/rss/cultura.xml",
-    "https://www.eltiempo.com/rss/cultura_arte-y-teatro.xml",
-    "https://www.eltiempo.com/rss/cultura_entretenimiento.xml",
-    "https://www.eltiempo.com/rss/cultura_gente.xml",
-    "https://www.eltiempo.com/rss/vida_educacion.xml"
+    # "https://www.eltiempo.com/rss/vida.xml",
+    # "https://www.eltiempo.com/rss/colombia_barranquilla.xml",
+    # "https://www.eltiempo.com/rss/colombia_medellin.xml",
+    # "https://www.eltiempo.com/rss/colombia_cali.xml",
+    # "https://www.eltiempo.com/rss/colombia_otras-ciudades.xml",
+    # "https://www.eltiempo.com/rss/bogota.xml",
+    # "https://www.eltiempo.com/rss/politica.xml",
+    # "https://www.eltiempo.com/rss/economia_empresas.xml",   
+    # "https://www.eltiempo.com/rss/deportes.xml",
+    # "https://www.eltiempo.com/rss/cultura.xml",
+    # "https://www.eltiempo.com/rss/cultura_arte-y-teatro.xml",
+    # "https://www.eltiempo.com/rss/cultura_entretenimiento.xml",
+    # "https://www.eltiempo.com/rss/cultura_gente.xml",
+    # "https://www.eltiempo.com/rss/vida_educacion.xml"
 ]
 
 # CHATGPT PROCESSING
