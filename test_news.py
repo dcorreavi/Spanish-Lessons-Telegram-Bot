@@ -13,7 +13,8 @@ from dateutil import parser
 # Load API keys from environment variables
 openai_api_key = os.getenv("OPENAI_API_KEY")
 telegram_bot_token = "TELEGRAM_API_KEY"
-telegram_chat_id = "@TELEGRAM_CHAT_ID"
+telegram_chat_id = "TELEGRAM_CHAT_ID"
+
 
 # Initialize OpenAI async client
 client = AsyncOpenAI(api_key="OPENAI_API_KEY")
