@@ -14,6 +14,19 @@ load_dotenv()  # <-- Add this
 telegram_bot_token = "TELEGRAM_API_KEY"
 telegram_chat_id = "TELEGRAM_CHAT_ID"
 
+def test_bot_token():
+    url = f"https://api.telegram.org/bot{telegram_bot_token}/getMe"
+    response = requests.get(url)
+    print("Bot Token Test:", response.json())
+
+def test_chat_id():
+    url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMessage"
+    payload = {
+        "chat_id": telegram_chat_id,
+        "text": "Simplest possible test message"
+    }
+    response = requests.post(url, data=payload)
+    print("Chat ID Test:", response.json())
 
 # Load API keys from environment variables
 openai_api_key = os.getenv("OPENAI_API_KEY")
