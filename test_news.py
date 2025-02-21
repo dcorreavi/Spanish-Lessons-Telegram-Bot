@@ -12,12 +12,11 @@ from dateutil import parser
 
 # Load API keys from environment variables
 openai_api_key = os.getenv("OPENAI_API_KEY")
-telegram_bot_token = "7599485043:AAHvcbacjwMh0GuTeObvipEVDsjS2jkoP74"
-telegram_chat_id = "@spanishbuzz"
+telegram_bot_token = "TELEGRAM_API_KEY"
+telegram_chat_id = "@TELEGRAM_CHAT_ID"
 
 # Initialize OpenAI async client
-client = AsyncOpenAI(api_key="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")
-
+client = AsyncOpenAI(api_key="OPENAI_API_KEY")
 
 print("Loaded OpenAI API Key:", openai_api_key)
 print("Loaded Telegram Bot Token:", telegram_bot_token)
