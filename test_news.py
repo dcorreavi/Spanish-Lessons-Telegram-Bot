@@ -164,7 +164,7 @@ feed_urls = [
 # CHATGPT PROCESSING
 
 async def process_articles(article_list, language):
-    language = "Russian" 
+    language = "English" 
     prompt = f"""
 You are an assistant that processes news articles.
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
         
         # 3. Process only the new articles with ChatGPT.
         if new_articles:
-            processed_articles = asyncio.run(process_articles(new_articles, "Russian"))
+            processed_articles = asyncio.run(process_articles(new_articles, "English"))
             if processed_articles:
                 # 4. Send the processed articles to Telegram.
                 send_articles_to_telegram(processed_articles, telegram_bot_token, telegram_chat_id)
