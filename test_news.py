@@ -6,6 +6,7 @@ import os
 import json
 import asyncio
 import time
+import pickle
 from datetime import datetime, timedelta
 from dateutil import parser
 from dotenv import load_dotenv  # <-- Add this
@@ -22,9 +23,25 @@ if openai_api_key is None:
 # Initialize OpenAI async client
 client = AsyncOpenAI(api_key=openai_api_key)
 
+# Load processed articles from a file
+PROCESSED_ARTICLES_FILE = 'processed_articles.pkl'
 
-# Global set to store URLs of processed articles
-processed_article_urls = set()
+# Try to load existing data, or start with an empty set
+def load_processed_articles():
+    try:
+        with open(PROCESSED_ARTICLES_FILE, 'rb') as f:
+            return pickle.load(f)
+    except (FileNotFoundError, EOFError):
+        return set()
+
+# Save the processed articles to a file
+def save_processed_articles():
+    with open(PROCESSED_ARTICLES_FILE, 'wb') as f:
+        pickle.dump(processed_article_urls, f)
+
+# Initialize the set of processed articles
+processed_article_urls = load_processed_articles()
+
 
 def is_article_duplicate(article):
     """
@@ -32,11 +49,14 @@ def is_article_duplicate(article):
     """
     url = article.get("link") or article.get("url_link")
     if not url:
+        print("no url")
         return False
     if url in processed_article_urls:
+        print("duplicate url")
         return True  # Already processed
     else:
         processed_article_urls.add(url)
+        print("not duplicate url")
         return False
 
 def filter_new_articles(articles):
@@ -72,7 +92,7 @@ def clean_and_parse_feed(feed_url):
     return None
 
 def today():
-    return (datetime.now().date())
+    return datetime.now().date() - timedelta(days=2)
 
 
 def parse_pub_date(pub_date_str):
@@ -112,7 +132,7 @@ def fetch_all_feeds(feed_urls, keywords1, keywords2):
 
 
 # List of Colombia-specific keywords
-keywords1 = ["Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranquilla", "Antioquia"]
+keywords1 = ["Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranquilla", "Antioquia","empresas"]
 
 # List of topic-related keywords (in Spanish)
 keywords2 = [
@@ -122,29 +142,29 @@ keywords2 = [
     "cultura colombiana", "festivales", "carnaval", "Navidad", "Semana Santa",
     "comunidad de expatriados", "restaurantes", "vida nocturna", "café", "economía", "tasa de cambio",
     "inflación", "empleos", "bienes raíces", "compra de propiedades", "alquiler", "TransMilenio de Bogotá",
-    "metro de Medellín", "vuelos en Colombia", "transporte en bus", "Uber", "viajes compartidos"
+    "metro de Medellín", "vuelos en Colombia", "transporte en bus", "Uber", "viajes compartidos","turismo"
 ]
 
 # List of RSS feed URLs
 feed_urls = [
-    "https://www.teleantioquia.co/noticias/feed/"
-    "https://thecitypaperbogota.com/feed/"
-    "https://vivirenelpoblado.com/feed/"
-    "https://www.eltiempo.com/rss/colombia.xml",
+    # "https://www.teleantioquia.co/noticias/feed/"
+    # "https://thecitypaperbogota.com/feed/"
+    # "https://vivirenelpoblado.com/feed/"
+    # "https://www.eltiempo.com/rss/colombia.xml",
     "https://www.eltiempo.com/rss/vida.xml",
-    "https://www.eltiempo.com/rss/colombia_barranquilla.xml",
-    "https://www.eltiempo.com/rss/colombia_medellin.xml",
-    "https://www.eltiempo.com/rss/colombia_cali.xml",
-    "https://www.eltiempo.com/rss/colombia_otras-ciudades.xml",
-    "https://www.eltiempo.com/rss/bogota.xml",
-    "https://www.eltiempo.com/rss/politica.xml",
-    "https://www.eltiempo.com/rss/economia_empresas.xml",   
-    "https://www.eltiempo.com/rss/deportes.xml",
-    "https://www.eltiempo.com/rss/cultura.xml",
-    "https://www.eltiempo.com/rss/cultura_arte-y-teatro.xml",
-    "https://www.eltiempo.com/rss/cultura_entretenimiento.xml",
-    "https://www.eltiempo.com/rss/cultura_gente.xml",
-    "https://www.eltiempo.com/rss/vida_educacion.xml"
+    # "https://www.eltiempo.com/rss/colombia_barranquilla.xml",
+    # "https://www.eltiempo.com/rss/colombia_medellin.xml",
+    # "https://www.eltiempo.com/rss/colombia_cali.xml",
+    # "https://www.eltiempo.com/rss/colombia_otras-ciudades.xml",
+    # "https://www.eltiempo.com/rss/bogota.xml",
+    # "https://www.eltiempo.com/rss/politica.xml",
+    # "https://www.eltiempo.com/rss/economia_empresas.xml",   
+    # "https://www.eltiempo.com/rss/deportes.xml",
+    # "https://www.eltiempo.com/rss/cultura.xml",
+    # "https://www.eltiempo.com/rss/cultura_arte-y-teatro.xml",
+    # "https://www.eltiempo.com/rss/cultura_entretenimiento.xml",
+    # "https://www.eltiempo.com/rss/cultura_gente.xml",
+    # "https://www.eltiempo.com/rss/vida_educacion.xml"
 ]
 
 # CHATGPT PROCESSING
@@ -220,6 +240,8 @@ def send_articles_to_telegram(articles, bot_token, chat_id):
 
 if __name__ == "__main__":
     
+    print("Loaded processed articles:", processed_article_urls)
+
     # 1. Fetch all articles from the feeds.
     all_articles = fetch_all_feeds(feed_urls, keywords1, keywords2)
     
@@ -241,3 +263,10 @@ if __name__ == "__main__":
             print("No new articles to process.")
     else:
         print("No relevant articles found in any of the feeds.")
+ 
+    # Save the updated set of processed articles
+    save_processed_articles()
+    print("Saved processed articles:", processed_article_urls)
+
+
+#     
