@@ -103,7 +103,7 @@ def parse_pub_date(pub_date_str):
         print(f"Error parsing pubDate '{pub_date_str}': {e}")
         return None
 
-def fetch_all_feeds(feed_urls, keywords1, keywords2):
+def fetch_all_feeds(feed_urls, keywords1, keywords2, keywords3):
     all_entries = []
     for url in feed_urls:
         print(f"Fetching feed from: {url}")
@@ -119,9 +119,11 @@ def fetch_all_feeds(feed_urls, keywords1, keywords2):
 
                 print(f"Title: {title}\nPubDate: {pub_date_str} -> Parsed: {parsed_pub_date}")
 
-                if any(k1.lower() in title.lower() or k1.lower() in description.lower() for k1 in keywords1) and \
-                   any(k2.lower() in title.lower() or k2.lower() in description.lower() for k2 in keywords2) and \
-                   parsed_pub_date and parsed_pub_date.date() >= today():
+                # Check all conditions
+                if (any(k1.lower() in title.lower() or k1.lower() in description.lower() for k1 in keywords1) and
+                    any(k2.lower() in title.lower() or k2.lower() in description.lower() for k2 in keywords2) and
+                    not any(k3.lower() in title.lower() or k3.lower() in description.lower() for k3 in keywords3) and
+                    parsed_pub_date and parsed_pub_date.date() >= today()):
                     filtered_entries.append(entry)
             print(f"Filtered {len(filtered_entries)} relevant articles.")
             all_entries.extend(filtered_entries)
@@ -137,6 +139,21 @@ keywords1 = ["Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranqui
 # List of topic-related keywords (in Spanish)
 keywords2 = [
     "celebration","travel","hotel","expat","holiday","easter","flights","backpacker","nightlife","sismo","proyectos","propiedad riaz","airbnb","viajes","volar","vuelos","playa","semana santa", "turismo", "visa", "expatriado", "nómada digital", "mochilero", "seguridad","mejores lugares", "vuelos", "hoteles", "hostales", "crimen", "protestas", "terremoto","inundaciones", "robo", "estafa", "inmigración", "residencia", "permiso de trabajo","cultura colombiana", "festivales", "carnaval", "Navidad", "Semana Santa","comunidad de expatriados", "restaurantes", "vida nocturna", "café", "economía", "tasa de cambio" "inflación", "empleos", "bienes raíces", "compra de propiedades", "alquiler", "TransMilenio de Bogotá","metro de Medellín", "vuelos en Colombia", "transporte en bus", "Uber", "viajes compartidos"
+]
+
+#List censored topics
+keywords3 = [
+    "asesinato", "mató", "mataron", "sexo", "pandilla", "escándalo", "arrestado",
+    "homicidio", "crimen", "violencia", "asalto", "robo", "secuestro", "terrorismo",
+    "armas", "disparo", "herido", "sangre", "pelea", "pistola", "cuchillo", "atentado",
+    "pornografía", "desnudo", "infidelidad", "adulterio", "prostitución", "erótico",
+    "sensual", "lujuria", "obsceno", "xxx", "corrupción", "fraude", "soborno", "escándalo",
+    "ilegal", "drogas", "narcotráfico", "contrabando", "abuso", "acoso", "muerte",
+    "suicidio", "tragedia", "accidente", "incendio", "terremoto", "huracán", "desastre",
+    "enfermedad", "epidemia", "pandillero", "maras", "cartel", "mafia", "extorsión",
+    "lavado de dinero", "tráfico", "delincuencia", "cárcel", "prisión", "insulto",
+    "ofensivo", "racismo", "discriminación", "odio", "maldición", "grosería", "vulgar",
+    "difamación", "calumnia"
 ]
 
 # List of RSS feed URLs
@@ -237,7 +254,7 @@ if __name__ == "__main__":
     print("Loaded processed articles:", processed_article_urls)
 
     # 1. Fetch all articles from the feeds.
-    all_articles = fetch_all_feeds(feed_urls, keywords1, keywords2)
+    all_articles = fetch_all_feeds(feed_urls, keywords1, keywords2, keywords3)
     
     if all_articles:
         print(f"\nTotal filtered articles: {len(all_articles)}")
