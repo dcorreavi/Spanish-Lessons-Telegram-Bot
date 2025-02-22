@@ -92,7 +92,7 @@ def clean_and_parse_feed(feed_url):
     return None
 
 def today():
-    return datetime.now().date() - timedelta(days=2)
+    return (datetime.now().date())
 
 
 def parse_pub_date(pub_date_str):
@@ -132,39 +132,33 @@ def fetch_all_feeds(feed_urls, keywords1, keywords2):
 
 
 # List of Colombia-specific keywords
-keywords1 = ["Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranquilla", "Antioquia","empresas"]
+keywords1 = ["Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranquilla", "Antioquia"]
 
 # List of topic-related keywords (in Spanish)
 keywords2 = [
-    "celebration","travel","hotel","expat","holiday","easter","flights","backpacker","nightlife","sismo","proyectos","propiedad riaz","airbnb","viajes","volar","vuelos","playa","semana santa", "turismo", "visa", "expatriado", "nómada digital", "mochilero", "seguridad",
-    "mejores lugares", "vuelos", "hoteles", "hostales", "crimen", "protestas", "terremoto",
-    "inundaciones", "robo", "estafa", "inmigración", "residencia", "permiso de trabajo",
-    "cultura colombiana", "festivales", "carnaval", "Navidad", "Semana Santa",
-    "comunidad de expatriados", "restaurantes", "vida nocturna", "café", "economía", "tasa de cambio",
-    "inflación", "empleos", "bienes raíces", "compra de propiedades", "alquiler", "TransMilenio de Bogotá",
-    "metro de Medellín", "vuelos en Colombia", "transporte en bus", "Uber", "viajes compartidos","turismo"
+    "celebration","travel","hotel","expat","holiday","easter","flights","backpacker","nightlife","sismo","proyectos","propiedad riaz","airbnb","viajes","volar","vuelos","playa","semana santa", "turismo", "visa", "expatriado", "nómada digital", "mochilero", "seguridad","mejores lugares", "vuelos", "hoteles", "hostales", "crimen", "protestas", "terremoto","inundaciones", "robo", "estafa", "inmigración", "residencia", "permiso de trabajo","cultura colombiana", "festivales", "carnaval", "Navidad", "Semana Santa","comunidad de expatriados", "restaurantes", "vida nocturna", "café", "economía", "tasa de cambio" "inflación", "empleos", "bienes raíces", "compra de propiedades", "alquiler", "TransMilenio de Bogotá","metro de Medellín", "vuelos en Colombia", "transporte en bus", "Uber", "viajes compartidos"
 ]
 
 # List of RSS feed URLs
 feed_urls = [
-    # "https://www.teleantioquia.co/noticias/feed/"
-    # "https://thecitypaperbogota.com/feed/"
-    # "https://vivirenelpoblado.com/feed/"
-    # "https://www.eltiempo.com/rss/colombia.xml",
+    "https://www.teleantioquia.co/noticias/feed/"
+    "https://thecitypaperbogota.com/feed/"
+    "https://vivirenelpoblado.com/feed/"
+    "https://www.eltiempo.com/rss/colombia.xml",
     "https://www.eltiempo.com/rss/vida.xml",
-    # "https://www.eltiempo.com/rss/colombia_barranquilla.xml",
-    # "https://www.eltiempo.com/rss/colombia_medellin.xml",
-    # "https://www.eltiempo.com/rss/colombia_cali.xml",
-    # "https://www.eltiempo.com/rss/colombia_otras-ciudades.xml",
-    # "https://www.eltiempo.com/rss/bogota.xml",
-    # "https://www.eltiempo.com/rss/politica.xml",
-    # "https://www.eltiempo.com/rss/economia_empresas.xml",   
-    # "https://www.eltiempo.com/rss/deportes.xml",
-    # "https://www.eltiempo.com/rss/cultura.xml",
-    # "https://www.eltiempo.com/rss/cultura_arte-y-teatro.xml",
-    # "https://www.eltiempo.com/rss/cultura_entretenimiento.xml",
-    # "https://www.eltiempo.com/rss/cultura_gente.xml",
-    # "https://www.eltiempo.com/rss/vida_educacion.xml"
+    "https://www.eltiempo.com/rss/colombia_barranquilla.xml",
+    "https://www.eltiempo.com/rss/colombia_medellin.xml",
+    "https://www.eltiempo.com/rss/colombia_cali.xml",
+    "https://www.eltiempo.com/rss/colombia_otras-ciudades.xml",
+    "https://www.eltiempo.com/rss/bogota.xml",
+    "https://www.eltiempo.com/rss/politica.xml",
+    "https://www.eltiempo.com/rss/economia_empresas.xml",   
+    "https://www.eltiempo.com/rss/deportes.xml",
+    "https://www.eltiempo.com/rss/cultura.xml",
+    "https://www.eltiempo.com/rss/cultura_arte-y-teatro.xml",
+    "https://www.eltiempo.com/rss/cultura_entretenimiento.xml",
+    "https://www.eltiempo.com/rss/cultura_gente.xml",
+    "https://www.eltiempo.com/rss/vida_educacion.xml"
 ]
 
 # CHATGPT PROCESSING
