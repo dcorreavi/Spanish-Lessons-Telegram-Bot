@@ -1,7 +1,9 @@
 import os
+from dotenv import load_dotenv
 import requests
 from openai import AsyncOpenAI
 
+load_dotenv()
 
 telegram_bot = os.getenv("TELEGRAM_API_KEY")
 telegram_channel_id =os.getenv("TELEGRAM_CHAT_ID")
