@@ -47,8 +47,6 @@ def send_message_telegram(bot_token, chat_id, message):
     except Exception as e:
         print("Error sending message:", e)
 
-    
-
 
 
 if __name__   == "__main__":
@@ -57,7 +55,13 @@ if __name__   == "__main__":
     generate_weekly_events()
     print(f"These are the events:{generate_weekly_events}")
 
-    #2 send message to telegram
-    send_message_telegram()
+    #2 generate and send message to telegram
+    weekly_events_message = generate_weekly_events()
+    print(f"These are the events:{generate_weekly_events}")
+    if weekly_events_message:
+        send_message_telegram(telegram_bot, telegram_channel_id, weekly_events_message)
+    else:
+        print("no new events this week")
+
     
 
