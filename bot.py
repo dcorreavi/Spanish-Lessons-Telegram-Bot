@@ -47,6 +47,17 @@ def get_topic_menu():
     ]
     return InlineKeyboardMarkup(keyboard)
 
+def get_level_menu():
+    keyboard = [
+        [InlineKeyboardButton("Beginner", callback_data="a1")],
+        [InlineKeyboardButton("Elementary", callback_data="a2")],
+        [InlineKeyboardButton("Pre-intermediate", callback_data="a2+"),
+         [InlineKeyboardButton("Intermediate", callback_data="B1")]],
+         [InlineKeyboardButton("Upper-intermediate", callback_data="B2")],
+         [InlineKeyboardButton("Advanced", callback_data="c1")]
+    ]
+    return InlineKeyboardButton(keyboard)
+
 def store_message_history(user_id, user_text, context):
     """Store message history in user_data."""
     if "message_history" not in context.user_data:
@@ -285,20 +296,25 @@ async def button_click(update: Update, context: CallbackContext) -> int:
     await query.answer()
 
     if query.data == "start_lesson":
-        await query.message.edit_text("Отлично! Давайте начнем. Пожалуйста, выберите свой уровень: A1, A2, B1, or B2.")
+        await query.message.edit_text("Отлично! Давайте начнем. Пожалуйста, выберите свой уровень:", reply_markup=get_level_menu())
         return SELECT_LEVEL
     elif query.data == "end_session":
         await query.message.edit_text("Session ended. See you next time!")
         return ConversationHandler.END
 
 async def select_level(update: Update, context: CallbackContext) -> int:
-    level = update.message.text.upper()
-    if level in ["A1", "A2", "B1", "B2"]:
-        context.user_data["level"] = level
-        await update.message.reply_text(f"Вы выбрали уровень {level}. Теперь выберите тему:", reply_markup=get_topic_menu())
+    query = update.callback_query
+    await query.answer()
+
+    level = query.data
+    context.user_data["level"] = level
+
+    if level:
+        
+        await query.message.edit_text(f"Вы выбрали уровень {level}. Теперь выберите тему:", reply_markup=get_topic_menu())
         return SELECT_TOPIC
     else:
-        await update.message.reply_text("Неверный выбор. Пожалуйста, выберите A1, A2, B1, or B2.")
+        await update.message.reply_text("Неверный выбор. Пожалуйста, выберите уровень.")
         return SELECT_LEVEL
 
 async def select_topic(update: Update, context: CallbackContext) -> int:
@@ -406,7 +422,7 @@ def main():
                       ],
         states={
             START_LESSON: [CallbackQueryHandler(button_click)],
-            SELECT_LEVEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_level)],
+            SELECT_LEVEL: [CallbackQueryHandler(select_level)],
             SELECT_TOPIC: [CallbackQueryHandler(select_topic)],
             CONTINUE_CONVERSATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, continue_conversation)],
         },
