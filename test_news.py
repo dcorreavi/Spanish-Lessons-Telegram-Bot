@@ -134,7 +134,7 @@ def fetch_all_feeds(feed_urls, keywords1, keywords2, keywords3):
 
 
 # List of Colombia-specific keywords
-keywords1 = ["Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranquilla", "Antioquia","Santa Marta","Tayrona", "San Andres", "Choco", "El Poblado", "Laureles"]
+keywords1 = ["Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranquilla", "Antioquia","Santa Marta","Tayrona", "San Andres", "Choco", "El Poblado", "Laureles", "caribe"]
 
 # List of topic-related keywords (in Spanish)
 keywords2 = [
