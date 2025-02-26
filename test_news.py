@@ -134,11 +134,11 @@ def fetch_all_feeds(feed_urls, keywords1, keywords2, keywords3):
 
 
 # List of Colombia-specific keywords
-keywords1 = ["Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranquilla", "Antioquia","Santa Marta","Tayrona", "San Andres", "Choco", "El Poblado", "Laureles", "caribe"]
+keywords1 = ["Pacífico","colombiana","Colombia", "Bogotá", "Medellín", "Cartagena", "Cali", "Barranquilla", "Antioquia","Santa Marta","Tayrona", "San Andres", "Choco", "El Poblado", "Laureles", "caribe","bitcoin"]
 
 # List of topic-related keywords (in Spanish)
 keywords2 = [
-    "celebration","travel","hotel","expat","holiday","easter","flights","backpacker","nightlife","sismo","proyectos","propiedad riaz","airbnb","viajes","volar","vuelos","playa","semana santa", "turismo", "visa", "expatriado", "nómada digital", "mochilero", "seguridad","mejores lugares", "vuelos", "hoteles", "hostales", "crimen", "protestas", "terremoto","inundaciones", "robo", "estafa", "inmigración", "residencia", "permiso de trabajo","cultura colombiana", "festivales", "carnaval", "Navidad", "Semana Santa","comunidad de expatriados", "restaurantes", "vida nocturna", "café", "economía", "tasa de cambio" "inflación", "empleos", "bienes raíces", "compra de propiedades", "alquiler", "TransMilenio de Bogotá","metro de Medellín", "vuelos en Colombia", "transporte en bus", "Uber", "viajes compartidos"
+    "empresa","concierto","discoteca","cantante","lluvia","fintech","bitcoin","biodiversidad","celebration","travel","hotel","expat","holiday","easter","flights","backpacker","nightlife","sismo","proyectos","propiedad riaz","airbnb","viajes","volar","vuelos","playa","semana santa", "turismo", "visa", "expatriado", "nómada digital", "mochilero", "seguridad","mejores lugares", "vuelos", "hoteles", "hostales", "crimen", "protestas", "terremoto","inundaciones", "robo", "estafa", "inmigración", "residencia", "permiso de trabajo","cultura colombiana", "festivales", "carnaval", "Navidad", "Semana Santa","comunidad de expatriados", "restaurantes", "vida nocturna", "café", "economía", "tasa de cambio" "inflación", "empleos", "bienes raíces", "compra de propiedades", "alquiler", "TransMilenio de Bogotá","metro de Medellín", "vuelos en Colombia", "transporte en bus", "Uber", "viajes compartidos"
 ]
 
 #List censored topics
