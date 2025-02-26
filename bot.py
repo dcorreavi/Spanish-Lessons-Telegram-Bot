@@ -51,12 +51,12 @@ def get_level_menu():
     keyboard = [
         [InlineKeyboardButton("Beginner", callback_data="a1")],
         [InlineKeyboardButton("Elementary", callback_data="a2")],
-        [InlineKeyboardButton("Pre-intermediate", callback_data="a2+"),
-         [InlineKeyboardButton("Intermediate", callback_data="B1")]],
+        [InlineKeyboardButton("Pre-intermediate", callback_data="a2+")],
+         [InlineKeyboardButton("Intermediate", callback_data="B1")],
          [InlineKeyboardButton("Upper-intermediate", callback_data="B2")],
          [InlineKeyboardButton("Advanced", callback_data="c1")]
     ]
-    return InlineKeyboardButton(keyboard)
+    return InlineKeyboardMarkup(keyboard)
 
 def store_message_history(user_id, user_text, context):
     """Store message history in user_data."""
@@ -303,6 +303,7 @@ async def button_click(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
 
 async def select_level(update: Update, context: CallbackContext) -> int:
+    
     query = update.callback_query
     await query.answer()
 
