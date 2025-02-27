@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 import os
 import json
+import asyncio  # Import asyncio for adding delays
 
 from new_word import generate_newword
 from database import VocabularyDB
@@ -27,7 +28,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Define states
-SELECT_LEVEL, START_LESSON, SELECT_TOPIC, CONTINUE_CONVERSATION, GIVE_FEEDBACK = range(5)
+SELECT_LEVEL, START_LESSON, SELECT_TOPIC, CONTINUE_CONVERSATION, GIVE_FEEDBACK, SEND_VOCABULARY = range(6)
 
 # Menu Keyboard
 def get_main_menu():
@@ -320,81 +321,108 @@ async def select_level(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text("Неверный выбор. Пожалуйста, выберите уровень.")
         return SELECT_LEVEL
 
-async def send_topic_vocabulary(update: Update, context: CallbackContext) -> None:
-    """Send topic-related vocabulary with audio"""
+async def send_topic_vocabulary(message, context: CallbackContext) -> None:
     level = context.user_data.get("level")
     topic = context.user_data.get("topic")
     
     if not level or not topic:
-        await update.message.reply_text("Please select a level and topic first using /start")
+        await message.reply_text("Please select a level and topic first using /start")
         return
     
-    # Get random words for the topic and level
     vocab_db = VocabularyDB()
-    words = vocab_db.get_topic_words(level, topic)
+    
+    # Get the lessons that have already been sent
+    sent_lessons = context.user_data.get("sent_lessons", [])
+    
+    # Get the next lesson that hasn't been sent yet
+    next_lesson = vocab_db.get_next_lesson(level, topic, sent_lessons)
+    
+    if not next_lesson:
+        await message.reply_text("No more lessons available for this topic and level.")
+        return
+    
+    # Get random words for the topic, level, and lesson
+    words = vocab_db.get_topic_words(level, topic, next_lesson)
     
     if not words:
-        await update.message.reply_text("No vocabulary found for this topic and level.")
+        await message.reply_text("No vocabulary found for this topic, level, and lesson.")
         return
     
-    # Send each word with its audio
-    message = "📚 *Vocabulary for this topic:*\n\n"
+    # Mark the lesson as sent
+    sent_lessons.append(next_lesson)
+    context.user_data["sent_lessons"] = sent_lessons
+    
+    # Prepare the message text for vocabulary
+    message_text = "📚 *Словарный запас по этой теме:*\n\n"
     for word, translation, audio_path in words:
-        message += f"*{word}* - {translation}\n"
+        message_text += f"*{word}* - {translation}\n"
         
-        # Send audio file if it exists
+        # Send the audio file in a separate message
         if audio_path and os.path.exists(audio_path):
             with open(audio_path, 'rb') as audio:
                 await context.bot.send_audio(
-                    chat_id=update.effective_chat.id,
+                    chat_id=message.chat.id,
                     audio=audio,
                     caption=f"🔊 {word}"
                 )
+                await asyncio.sleep(1)  # Add a delay of 1 second between audio messages
+        else:
+            logger.warning(f"Audio file not found for word: {word}")
     
-    await update.message.reply_text(message, parse_mode="Markdown")
+    # Send the vocabulary message
+    await message.reply_text(message_text, parse_mode="Markdown")
+    
+    # Ask the user to continue to the question
+    keyboard = [[InlineKeyboardButton("«Продолжить»", callback_data="continue_question")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await message.reply_text("Нажмите «Продолжить», чтобы получить вопрос по теме.", reply_markup=reply_markup)
+
+    # Transition to the SEND_VOCABULARY state
+    return SEND_VOCABULARY
 
 async def select_topic(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
 
-    topic = query.data.replace("topic_", "").capitalize()
-    context.user_data["topic"] = topic
+    topic = query.data  # This should be "topic_travel"
+    context.user_data["topic"] = topic  # Store the exact value used in the database
 
     await query.message.edit_text(f"Отлично! Вы выбрали {topic}. Начнем!")
 
-    # Send vocabulary first
-    await send_topic_vocabulary(update.get_message(), context)
+    # Send vocabulary first and transition to SEND_VOCABULARY state
+    return await send_topic_vocabulary(query.message, context)
 
-    # Continue with the existing question generation
-    level = context.user_data.get("level")
-    if not level:
-        await query.message.reply_text("Error: Отсутствует уровень. Перезапустить с /start.")
-        return ConversationHandler.END
+async def continue_question(update: Update, context: CallbackContext) -> int:
     
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
+    query = update.callback_query
+    await query.answer()
+
+    level = context.user_data.get("level")
+    topic = context.user_data.get("topic")
+
+    # Generate the question for the topic
     questions = await generate_question(topic, level)
     if questions:
+        question_text = questions.choices[0].message.content
+        print(f"this is the question_text {question_text}")
 
-        # Extract the content from the API response (assumes OpenAI's response format)
-            question_text = questions.choices[0].message.content
-            print(f"this is the question_text {question_text}")
+        # Parse the JSON string returned by the model
+        response_data_question = json.loads(question_text)
 
-            # Parse the JSON string returned by the model
-            response_data_question = json.loads(question_text)
+        # Format the parsed JSON into MarkdownV2
+        formatted_question = format_to_markdown_question(response_data_question)
+        print(f"this is the formatted_question: {formatted_question}")
 
-             # Format the parsed JSON into MarkdownV2
-            formatted_question = format_to_markdown_question(response_data_question)
-            print(f"this is the formatted_question: {formatted_question}")
-
-            escaped_question = escape_markdown_v2(formatted_question)
-            print(f"this is the escaped_question: {escaped_question}")
-            
-            await query.message.reply_text(escaped_question, parse_mode="MarkdownV2")
+        escaped_question = escape_markdown_v2(formatted_question)
+        print(f"this is the escaped_question: {escaped_question}")
+        
+        await query.message.reply_text(escaped_question, parse_mode="MarkdownV2")
     else:
         await query.message.reply_text("Failed to generate questions. Try again later.")
-    return CONTINUE_CONVERSATION
-
+    
+    return CONTINUE_CONVERSATION  # Return to the conversation state
 
 async def continue_conversation(update: Update, context: CallbackContext) -> int:
     print("start generating response function")
@@ -461,12 +489,12 @@ def main():
 
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start),
-                      CommandHandler("new_word",new_word_button)
-                      ],
+                      CommandHandler("new_word", new_word_button)],
         states={
             START_LESSON: [CallbackQueryHandler(button_click)],
             SELECT_LEVEL: [CallbackQueryHandler(select_level)],
             SELECT_TOPIC: [CallbackQueryHandler(select_topic)],
+            SEND_VOCABULARY: [CallbackQueryHandler(continue_question)],
             CONTINUE_CONVERSATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, continue_conversation)],
         },
         fallbacks=[CommandHandler("cancel", cancel)]
