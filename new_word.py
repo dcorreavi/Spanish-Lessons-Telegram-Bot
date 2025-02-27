@@ -13,7 +13,10 @@ load_dotenv(override=True)
 
 # Debug: Check if the key is loaded
 api_key = os.getenv("OPENAI_API_KEY")
-print("Loaded API Key:", api_key)  # Should show your actual key (not placeholder)
+if api_key is None:
+    logger.error("OPENAI_API_KEY not found. Please check your .env file.")
+else:
+    print("Loaded API Key:", api_key)  # Should show your actual key (not placeholder)
 
 # Initialize client
 client = AsyncOpenAI(api_key=api_key)  # Directly pass the key
@@ -65,7 +68,15 @@ async def generate_newword():
                 temperature=0.9  # Increase temperature for more creative responses
             )
             
+            # Log the raw response for debugging
+            logger.info(f"Response from OpenAI: {response}")
+
             content = response.choices[0].message.content.strip()
+            if not content:
+                logger.warning("Received empty content from OpenAI.")
+                attempts += 1
+                continue
+            
             expression = extract_expression(content)
             print(f"these are the last 5 expressions: {last_generated_expressions}")
             
