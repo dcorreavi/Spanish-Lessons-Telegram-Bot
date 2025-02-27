@@ -8,6 +8,8 @@ import os
 import json
 
 from new_word import generate_newword
+from database import VocabularyDB
+from audio_utils import generate_audio
 
 
 # Load environment variables
@@ -318,6 +320,39 @@ async def select_level(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text("Неверный выбор. Пожалуйста, выберите уровень.")
         return SELECT_LEVEL
 
+async def send_topic_vocabulary(update: Update, context: CallbackContext) -> None:
+    """Send topic-related vocabulary with audio"""
+    level = context.user_data.get("level")
+    topic = context.user_data.get("topic")
+    
+    if not level or not topic:
+        await update.message.reply_text("Please select a level and topic first using /start")
+        return
+    
+    # Get random words for the topic and level
+    vocab_db = VocabularyDB()
+    words = vocab_db.get_topic_words(level, topic)
+    
+    if not words:
+        await update.message.reply_text("No vocabulary found for this topic and level.")
+        return
+    
+    # Send each word with its audio
+    message = "📚 *Vocabulary for this topic:*\n\n"
+    for word, translation, audio_path in words:
+        message += f"*{word}* - {translation}\n"
+        
+        # Send audio file if it exists
+        if audio_path and os.path.exists(audio_path):
+            with open(audio_path, 'rb') as audio:
+                await context.bot.send_audio(
+                    chat_id=update.effective_chat.id,
+                    audio=audio,
+                    caption=f"🔊 {word}"
+                )
+    
+    await update.message.reply_text(message, parse_mode="Markdown")
+
 async def select_topic(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
@@ -327,6 +362,10 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
 
     await query.message.edit_text(f"Отлично! Вы выбрали {topic}. Начнем!")
 
+    # Send vocabulary first
+    await send_topic_vocabulary(update.get_message(), context)
+
+    # Continue with the existing question generation
     level = context.user_data.get("level")
     if not level:
         await query.message.reply_text("Error: Отсутствует уровень. Перезапустить с /start.")
@@ -416,6 +455,9 @@ async def cancel(update: Update, context: CallbackContext) -> int:
 
 def main():
     application = Application.builder().token(TELEGRAM_API_KEY).build()
+
+    # Add new command handler for vocabulary
+    application.add_handler(CommandHandler("vocabulary", send_topic_vocabulary))
 
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start),
