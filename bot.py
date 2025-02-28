@@ -284,12 +284,16 @@ async def new_word_button(update: Update, context: CallbackContext) -> int:
     keyboard = [[InlineKeyboardButton(country, callback_data=country) for country in countries]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
+    # Debugging: Print to check if this function is called
+    print("Sending inline keyboard for country selection.")
+
     # Step 3: Send message with inline keyboard
-    await update.message.reply_text("Please choose a country from the following list:", reply_markup=reply_markup)
+    await update.message.reply_text("Пожалуйста, выберите страну из следующего списка:", reply_markup=reply_markup)
     return CHOOSING_COUNTRY  # Define a new state for choosing the country
 
 # Step 4: Handle the callback query for country selection
 async def process_country_selection(update: Update, context: CallbackContext) -> None:
+    print("Country selection callback triggered.")
     query = update.callback_query
     await query.answer()  # Acknowledge the callback
 
