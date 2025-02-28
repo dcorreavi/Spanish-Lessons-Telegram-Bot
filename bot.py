@@ -277,27 +277,38 @@ async def give_feedback(update: Update, context: CallbackContext):
 #HANDLING FUNCTIONS
 
 async def new_word_button(update: Update, context: CallbackContext) -> int:
+    logger.info("=== Starting new_word_button function ===")
+    
     # Step 1: List of countries to choose from
     countries = ["Colombia", "Mexico", "Spain", "Argentina", "Chile"]
     
-    # Step 2: Create inline keyboard
-    keyboard = [[InlineKeyboardButton(country, callback_data=country) for country in countries]]
+    # Step 2: Create inline keyboard with one button per row for better visibility
+    keyboard = [[InlineKeyboardButton(country, callback_data=f"country_{country}")] for country in countries]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Debugging: Print to check if this function is called
-    print("Sending inline keyboard for country selection.")
-
-    # Step 3: Send message with inline keyboard
-    await update.message.reply_text("Пожалуйста, выберите страну из следующего списка:", reply_markup=reply_markup)
-    return CHOOSING_COUNTRY  # Define a new state for choosing the country
+    logger.info("Created inline keyboard")
+    
+    try:
+        # Step 3: Send message with inline keyboard
+        await update.message.reply_text(
+            "Пожалуйста, выберите страну из следующего списка:",
+            reply_markup=reply_markup
+        )
+        logger.info("Sent message with inline keyboard")
+        return CHOOSING_COUNTRY
+    except Exception as e:
+        logger.error(f"Error in new_word_button: {e}")
+        return ConversationHandler.END
 
 # Step 4: Handle the callback query for country selection
 async def process_country_selection(update: Update, context: CallbackContext) -> int:
-    print("Country selection callback triggered.")
+    logger.info("=== Starting process_country_selection ===")
     query = update.callback_query
-    await query.answer()  # Acknowledge the callback
+    await query.answer()
 
-    country_choice = query.data  # Get the selected country from callback data
+    # Extract country name from callback_data by removing the prefix
+    country_choice = query.data.replace("country_", "")
+    logger.info(f"Selected country: {country_choice}")
     await context.bot.send_chat_action(chat_id=query.effective_chat.id, action=ChatAction.TYPING)
     
     new_word = await generate_newword(country_choice)  # Pass the selected country to the function
@@ -375,32 +386,34 @@ async def send_topic_vocabulary(message, context: CallbackContext) -> None:
     sent_lessons.append(next_lesson)
     context.user_data["sent_lessons"] = sent_lessons
     
-    # Prepare the message text for vocabulary
-    message_text = "📚 *Словарный запас по этой теме:*\n\n"
+    # Send vocabulary items one by one with text and audio
     for word, translation, audio_path in words:
-        message_text += f"*{word}* - {translation}\n"
+        # First send the word and translation as a text message
+        word_text = f"📝 *{word}* - {translation}"
+        await message.reply_text(word_text, parse_mode="Markdown")
         
-        # Send the audio file as voice message
+        # Then send the audio if available
         if audio_path and os.path.exists(audio_path):
             with open(audio_path, 'rb') as audio:
-                await context.bot.send_voice(
-                    chat_id=message.chat.id,
-                    voice=audio,
-                    caption=f"🔊 {word}"
-                )
-                await asyncio.sleep(1)  # Add a delay of 1 second between audio messages
+                try:
+                    await context.bot.send_voice(
+                        chat_id=message.chat.id,
+                        voice=audio,
+                        caption=f"🔊 Произношение: {word}"
+                    )
+                except Exception as e:
+                    logger.error(f"Error sending audio for {word}: {e}")
+            await asyncio.sleep(1)  # Add a delay between words
         else:
             logger.warning(f"Audio file not found for word: {word}")
     
-    # Send the vocabulary message
-    await message.reply_text(message_text, parse_mode="Markdown")
-    
-    # Ask the user to continue to the question
+    # Send continue button after all words
     keyboard = [[InlineKeyboardButton("«Продолжить»", callback_data="continue_question")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await message.reply_text("Нажмите «Продолжить», чтобы получить вопрос по теме.", reply_markup=reply_markup)
-
-    # Transition to the SEND_VOCABULARY state
+    await message.reply_text(
+        "✅ Словарь загружен! Нажмите «Продолжить», чтобы получить вопрос по теме.",
+        reply_markup=reply_markup
+    )
     return SEND_VOCABULARY
 
 async def select_topic(update: Update, context: CallbackContext) -> int:
