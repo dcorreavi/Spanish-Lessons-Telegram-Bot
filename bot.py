@@ -391,24 +391,19 @@ async def send_topic_vocabulary(message, context: CallbackContext) -> None:
     sent_lessons.append(next_lesson)
     context.user_data["sent_lessons"] = sent_lessons
     
-    # Send vocabulary items one by one with text and audio
+    # Send vocabulary items one by one with text and an inline button for audio
     for word, translation, audio_path in words:
         # First send the word and translation as a text message
         word_text = f"📝 *{word}* - {translation}"
         await message.reply_text(word_text, parse_mode="Markdown")
         
-        # Then send the audio if available
+        # If an audio file is available, send an inline button to play it
         if audio_path and os.path.exists(audio_path):
-            with open(audio_path, 'rb') as audio:
-                try:
-                    await context.bot.send_voice(
-                        chat_id=message.chat.id,
-                        voice=audio,
-                        caption=f"🔊 Произношение: {word}"
-                    )
-                except Exception as e:
-                    logger.error(f"Error sending audio for {word}: {e}")
-            await asyncio.sleep(1)  # Add a delay between words
+            keyboard = [
+                [InlineKeyboardButton("▶️ Play Audio", callback_data=f"play_{word}")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await message.reply_text("Click the button to listen:", reply_markup=reply_markup)
         else:
             logger.warning(f"Audio file not found for word: {word}")
     
@@ -522,6 +517,28 @@ async def cancel(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text("Спасибо за практику! Увидимся в следующий раз.")
     return ConversationHandler.END
 
+async def play_audio(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    # Extract the word from the callback data
+    word = query.data.replace("play_", "")
+    logger.info(f"Playing audio for word: {word}")
+
+    # Retrieve the audio path from the database or context
+    vocab_db = VocabularyDB()
+    audio_path = vocab_db.get_audio_path(word)
+
+    if audio_path and os.path.exists(audio_path):
+        with open(audio_path, 'rb') as audio:
+            await context.bot.send_voice(
+                chat_id=query.message.chat_id,
+                voice=audio,
+                caption=f"🔊 Произношение: {word}"
+            )
+    else:
+        await query.message.reply_text("Audio file not found.")
+
 def main():
     application = Application.builder().token(TELEGRAM_API_KEY).build()
 
@@ -537,12 +554,13 @@ def main():
             SELECT_TOPIC: [CallbackQueryHandler(select_topic)],
             SEND_VOCABULARY: [CallbackQueryHandler(continue_question)],
             CONTINUE_CONVERSATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, continue_conversation)],
-            CHOOSING_COUNTRY: [
-                CallbackQueryHandler(process_country_selection, pattern=r'^country_')
-            ],
+            CHOOSING_COUNTRY: [CallbackQueryHandler(process_country_selection)],
         },
         fallbacks=[CommandHandler("cancel", cancel)]
     )
+
+    # Add this handler for playing audio
+    application.add_handler(CallbackQueryHandler(play_audio, pattern=r'^play_'))
 
     application.add_handler(conversation_handler)
     application.run_polling()
