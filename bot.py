@@ -309,7 +309,12 @@ async def process_country_selection(update: Update, context: CallbackContext) ->
     # Extract country name from callback_data by removing the prefix
     country_choice = query.data.replace("country_", "")
     logger.info(f"Selected country: {country_choice}")
-    await context.bot.send_chat_action(chat_id=query.effective_chat.id, action=ChatAction.TYPING)
+    
+    # Fix: Use query.message.chat_id instead of query.effective_chat.id
+    await context.bot.send_chat_action(
+        chat_id=query.message.chat_id,  # Changed this line
+        action=ChatAction.TYPING
+    )
     
     new_word = await generate_newword(country_choice)  # Pass the selected country to the function
     if new_word:
@@ -318,7 +323,7 @@ async def process_country_selection(update: Update, context: CallbackContext) ->
     else:
         await query.message.reply_text("Failed to generate new expression.")
     
-    return ConversationHandler.END  # Add this line to end the conversation after sending the word
+    return ConversationHandler.END
 
 async def start(update: Update, context: CallbackContext) -> int:
     context.user_data["turns"] = 0
@@ -532,7 +537,9 @@ def main():
             SELECT_TOPIC: [CallbackQueryHandler(select_topic)],
             SEND_VOCABULARY: [CallbackQueryHandler(continue_question)],
             CONTINUE_CONVERSATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, continue_conversation)],
-            CHOOSING_COUNTRY: [CallbackQueryHandler(process_country_selection)],
+            CHOOSING_COUNTRY: [
+                CallbackQueryHandler(process_country_selection, pattern=r'^country_')
+            ],
         },
         fallbacks=[CommandHandler("cancel", cancel)]
     )
