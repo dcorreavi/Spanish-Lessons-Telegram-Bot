@@ -35,7 +35,7 @@ def extract_expression(content: str) -> str:
         return match.group(1).strip()
     return None
 
-async def generate_newword():
+async def generate_newword(country_choice: str):
     print("start generating word function")
 
     max_attempts = 3  # Maximum attempts to get a non-duplicate expression
@@ -44,10 +44,6 @@ async def generate_newword():
     while attempts < max_attempts:
         try:
             logger.info("Generating new word...")
-            
-            # Randomly choose a country for more variation
-            countries = ["Colombia"]
-            country_choice = random.choice(countries)
             
             prompt = f"""
             You are a creative Spanish language teacher. Generate a fresh and unique Spanish expression or slang term from {country_choice}. Please provide the following details in your answer:
@@ -110,5 +106,5 @@ async def generate_newword():
     return content.split("\n")
 
 if __name__ == "__main__":
-    asyncio.run(generate_newword())
+    asyncio.run(generate_newword("Colombia"))
 

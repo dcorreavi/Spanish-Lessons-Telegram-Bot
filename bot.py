@@ -28,7 +28,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 # Define states
-SELECT_LEVEL, START_LESSON, SELECT_TOPIC, CONTINUE_CONVERSATION, GIVE_FEEDBACK, SEND_VOCABULARY = range(6)
+SELECT_LEVEL, START_LESSON, SELECT_TOPIC, CONTINUE_CONVERSATION, GIVE_FEEDBACK, SEND_VOCABULARY, CHOOSING_COUNTRY = range(7)
 
 # Menu Keyboard
 def get_main_menu():
@@ -277,14 +277,31 @@ async def give_feedback(update: Update, context: CallbackContext):
 #HANDLING FUNCTIONS
 
 async def new_word_button(update: Update, context: CallbackContext) -> int:
-    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-    new_word = await generate_newword()
+    # Step 1: List of countries to choose from
+    countries = ["Colombia", "Mexico", "Spain", "Argentina", "Chile"]
+    
+    # Step 2: Create inline keyboard
+    keyboard = [[InlineKeyboardButton(country, callback_data=country) for country in countries]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    # Step 3: Send message with inline keyboard
+    await update.message.reply_text("Please choose a country from the following list:", reply_markup=reply_markup)
+    return CHOOSING_COUNTRY  # Define a new state for choosing the country
+
+# Step 4: Handle the callback query for country selection
+async def process_country_selection(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    await query.answer()  # Acknowledge the callback
+
+    country_choice = query.data  # Get the selected country from callback data
+    await context.bot.send_chat_action(chat_id=query.effective_chat.id, action=ChatAction.TYPING)
+    
+    new_word = await generate_newword(country_choice)  # Pass the selected country to the function
     if new_word:
         new_word_text = "\n".join(new_word)
-        await update.message.reply_text(new_word_text, parse_mode="HTML")
+        await query.message.reply_text(new_word_text, parse_mode="HTML")
     else:
-        await update.message.reply_text("Failed to generate new expression.")
-        return ConversationHandler.END
+        await query.message.reply_text("Failed to generate new expression.")
 
 async def start(update: Update, context: CallbackContext) -> int:
     context.user_data["turns"] = 0
@@ -496,6 +513,7 @@ def main():
             SELECT_TOPIC: [CallbackQueryHandler(select_topic)],
             SEND_VOCABULARY: [CallbackQueryHandler(continue_question)],
             CONTINUE_CONVERSATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, continue_conversation)],
+            CHOOSING_COUNTRY: [CallbackQueryHandler(process_country_selection)],
         },
         fallbacks=[CommandHandler("cancel", cancel)]
     )
