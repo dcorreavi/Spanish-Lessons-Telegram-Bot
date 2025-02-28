@@ -292,7 +292,7 @@ async def new_word_button(update: Update, context: CallbackContext) -> int:
     return CHOOSING_COUNTRY  # Define a new state for choosing the country
 
 # Step 4: Handle the callback query for country selection
-async def process_country_selection(update: Update, context: CallbackContext) -> None:
+async def process_country_selection(update: Update, context: CallbackContext) -> int:
     print("Country selection callback triggered.")
     query = update.callback_query
     await query.answer()  # Acknowledge the callback
@@ -306,6 +306,8 @@ async def process_country_selection(update: Update, context: CallbackContext) ->
         await query.message.reply_text(new_word_text, parse_mode="HTML")
     else:
         await query.message.reply_text("Failed to generate new expression.")
+    
+    return ConversationHandler.END  # Add this line to end the conversation after sending the word
 
 async def start(update: Update, context: CallbackContext) -> int:
     context.user_data["turns"] = 0
@@ -378,12 +380,12 @@ async def send_topic_vocabulary(message, context: CallbackContext) -> None:
     for word, translation, audio_path in words:
         message_text += f"*{word}* - {translation}\n"
         
-        # Send the audio file in a separate message
+        # Send the audio file as voice message
         if audio_path and os.path.exists(audio_path):
             with open(audio_path, 'rb') as audio:
-                await context.bot.send_audio(
+                await context.bot.send_voice(
                     chat_id=message.chat.id,
-                    audio=audio,
+                    voice=audio,
                     caption=f"🔊 {word}"
                 )
                 await asyncio.sleep(1)  # Add a delay of 1 second between audio messages
