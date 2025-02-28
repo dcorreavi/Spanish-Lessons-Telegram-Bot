@@ -528,8 +528,10 @@ async def play_audio(update: Update, context: CallbackContext) -> None:
     # Retrieve the audio path from the database or context
     vocab_db = VocabularyDB()
     audio_path = vocab_db.get_audio_path(word)
+    logger.info(f"Retrieved audio path: {audio_path}")
 
     if audio_path and os.path.exists(audio_path):
+        logger.info(f"Audio file exists: {audio_path}")
         with open(audio_path, 'rb') as audio:
             await context.bot.send_voice(
                 chat_id=query.message.chat_id,
@@ -537,6 +539,7 @@ async def play_audio(update: Update, context: CallbackContext) -> None:
                 caption=f"🔊 Произношение: {word}"
             )
     else:
+        logger.warning(f"Audio file not found for word: {word}")
         await query.message.reply_text("Audio file not found.")
 
 def main():
