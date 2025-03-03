@@ -67,14 +67,14 @@ def store_message_history(user_id, user_text, context):
         context.user_data["message_history"] = []
     context.user_data["message_history"].append(user_text)
 
-async def generate_question(topic: str, level: str) -> str:
+async def generate_question(topic: str, level: str, word: str) -> str:
     try:
         prompt = f"""
 
         You are a Spanish teacher.
 
         Instructions:
-        1. Generate a question in Spanish for student level {level} related to topic {topic}.
+        1. Generate a question in Spanish for student level {level} related to topic {topic} that will allow him to use this word: {word}.
         2. Translate the question into Russian
         3. Include a hint on how the student can reply to the question.
         5. Translate the hint into Russian.
@@ -106,7 +106,7 @@ async def generate_question(topic: str, level: str) -> str:
         logger.error(f"Error generating question: {e}")
         return None
 
-async def conversation_response(user_text,convo_topic, chat_history):
+async def conversation_response(user_text, convo_topic, chat_history, word):
     print(f"DEBUG: Retrieved topic from context.user_data: {convo_topic}")
     try:
         prompt = f"""
@@ -115,10 +115,11 @@ You are a Spanish language teacher. Consider the following conversation context:
 
 A student recently said: "{user_text}"
 The topic is: "{convo_topic}"
+Use the word: "{word}"
 
 Instructions:
 1. Analyze the student's reply. If there are any mistakes, provide corrections; otherwise, leave the correction field empty.
-2. Ask a follow-up question in Spanish that continues the conversation, taking into account the above context.
+2. Ask a follow-up question in Spanish that continues the conversation, taking into account the above context and using the word "{word}".
 3. Translate the follow-up question into Russian.
 4. Provide a hint for the student on how to respond in Spanish.
 5. Translate the hint into Russian.
@@ -161,7 +162,6 @@ Example output on input from student without mistake:
             max_tokens=150,
             temperature=1.0
         )
-        # response_json = response.choices[0].message.content.strip().split("\n")
         print(response_json)
         return response_json
     except Exception as e:  
@@ -387,6 +387,11 @@ async def send_topic_vocabulary(message, context: CallbackContext) -> None:
         await message.reply_text("No vocabulary found for this topic, level, and lesson.")
         return
     
+    # Store the words in user_data for later use
+    context.user_data["words"] = words
+    # Initialize the index
+    context.user_data["word_index"] = 0
+    
     # Mark the lesson as sent
     sent_lessons.append(next_lesson)
     context.user_data["sent_lessons"] = sent_lessons
@@ -400,10 +405,10 @@ async def send_topic_vocabulary(message, context: CallbackContext) -> None:
         # If an audio file is available, send an inline button to play it
         if audio_path and os.path.exists(audio_path):
             keyboard = [
-                [InlineKeyboardButton("▶️ Play Audio", callback_data=f"play_{word}")]
+                [InlineKeyboardButton("▶️ Произнешение ", callback_data=f"play_{word}")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            await message.reply_text("Click the button to listen:", reply_markup=reply_markup)
+            await message.reply_text("Нажимай кнопку для аудио:", reply_markup=reply_markup)
         else:
             logger.warning(f"Audio file not found for word: {word}")
     
@@ -429,7 +434,6 @@ async def select_topic(update: Update, context: CallbackContext) -> int:
     return await send_topic_vocabulary(query.message, context)
 
 async def continue_question(update: Update, context: CallbackContext) -> int:
-    
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
     query = update.callback_query
@@ -438,8 +442,19 @@ async def continue_question(update: Update, context: CallbackContext) -> int:
     level = context.user_data.get("level")
     topic = context.user_data.get("topic")
 
+    # Retrieve the list of words and the current index from user_data
+    words = context.user_data.get("words", [])
+    word_index = context.user_data.get("word_index", 0)
+    
+    if not words or word_index >= len(words):
+        await query.message.reply_text("No words available to generate a question.")
+        return CONTINUE_CONVERSATION
+
+    # Choose a word to use in the question
+    word = words[word_index][0]  # Use the first word in the list; adjust as needed
+
     # Generate the question for the topic
-    questions = await generate_question(topic, level)
+    questions = await generate_question(topic, level, word)
     if questions:
         question_text = questions.choices[0].message.content
         print(f"this is the question_text {question_text}")
@@ -455,6 +470,8 @@ async def continue_question(update: Update, context: CallbackContext) -> int:
         print(f"this is the escaped_question: {escaped_question}")
         
         await query.message.reply_text(escaped_question, parse_mode="MarkdownV2")
+        # Increment the index for the next word
+        context.user_data["word_index"] = word_index + 1
     else:
         await query.message.reply_text("Failed to generate questions. Try again later.")
     
@@ -474,20 +491,29 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
     turns = context.user_data.get("turns", 0)
     max_turns = 5
 
-    # Check if maximum turns reached
-    if turns >= max_turns:
+    # Retrieve the list of words and the current index from user_data
+    words = context.user_data.get("words", [])
+    word_index = context.user_data.get("word_index", 0)
+
+    # Check if maximum turns reached or no more words
+    if turns >= max_turns or word_index >= len(words):
         await update.message.reply_text("Хорошая работа! Давайте дадим вам обратную связь по этому разговору.")
         return await give_feedback(update, context)
 
     try:
         convo_topic = context.user_data["topic"]
-        user_text = update.message.text
+
+        # Use the current word based on the index
+        word = words[word_index][0]  # Assuming the word is the first element in the tuple
 
         # Generate chatbot response with feedback and follow-up
-        response = await conversation_response(user_text, convo_topic, chat_history)
+        response = await conversation_response(user_text, convo_topic, chat_history, word)
         if response:
             # Increase turn count and store it back in user_data
             context.user_data["turns"] = turns + 1
+
+            # Increment the index for the next word
+            context.user_data["word_index"] = word_index + 1
 
             # Extract the content from the API response (assumes OpenAI's response format)
             response_text = response.choices[0].message.content
@@ -496,7 +522,7 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
             # Parse the JSON string returned by the model
             response_data = json.loads(response_text)
 
-             # Format the parsed JSON into MarkdownV2
+            # Format the parsed JSON into MarkdownV2
             formatted_response = format_to_markdown(response_data)
             print(f"this is the formatted response: {formatted_response}")
 

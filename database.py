@@ -52,3 +52,15 @@ class VocabularyDB:
             ''', (level, topic, ','.join(sent_lessons)))
             lessons = cursor.fetchall()
             return lessons[0][0] if lessons else None  # Return the first lesson not sent 
+
+    def get_audio_path(self, word: str) -> str | None:
+        """Retrieve the audio path for a given word."""
+        with sqlite3.connect(self.db_name) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT audio_path 
+                FROM vocabulary 
+                WHERE word = ?
+            ''', (word,))
+            result = cursor.fetchone()
+            return result[0] if result else None 
