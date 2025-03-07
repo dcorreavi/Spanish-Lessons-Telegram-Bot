@@ -3,3 +3,5 @@ __pycache__/
 	deploy.sh
 	venv/
 	webhook_listener.sh
+
+google-service-file.json

@@ -7,10 +7,12 @@ from openai import AsyncOpenAI
 import os
 import json
 import asyncio  # Import asyncio for adding delays
+from google.cloud import speech_v1p1beta1 as speech  # Import Google Speech-to-Text
 
 from new_word import generate_newword
 from database import VocabularyDB
 from audio_utils import generate_audio
+
 
 
 # Load environment variables
@@ -568,6 +570,47 @@ async def play_audio(update: Update, context: CallbackContext) -> None:
         logger.warning(f"Audio file not found for word: {word}")
         await query.message.reply_text("Audio file not found.")
 
+async def handle_audio_message(update: Update, context: CallbackContext) -> int:
+    """Handle incoming audio messages."""
+    audio_file = await update.message.voice.get_file()
+    file_path = await audio_file.download()
+
+    try:
+        # Specify the path to your service account JSON file
+        credentials_path = os.path.join("config", "your-service-account-file.json")
+
+        # Convert audio to text using Google Speech-to-Text
+        client = speech.SpeechClient.from_service_account_file(credentials_path)
+
+        with open(file_path, "rb") as audio:
+            audio_content = audio.read()
+
+        audio = speech.RecognitionAudio(content=audio_content)
+        config = speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.OGG_OPUS,
+            sample_rate_hertz=16000,  # Adjust this based on your audio file's sample rate
+            language_code="es-ES",  # Spanish language code
+        )
+
+        response = client.recognize(config=config, audio=audio)
+
+        user_text = ""
+        for result in response.results:
+            user_text += result.alternatives[0].transcript
+
+        if user_text:
+            # Store the converted text in the message history
+            store_message_history(update.message.from_user.id, user_text, context)
+            # Continue the conversation with the converted text
+            return await continue_conversation(update, context)
+        else:
+            await update.message.reply_text("Не удалось распознать аудио. Пожалуйста, попробуйте еще раз.")
+            return CONTINUE_CONVERSATION
+    except Exception as e:
+        logger.error(f"Error processing audio message: {e}")
+        await update.message.reply_text("Произошла ошибка при обработке аудио.")
+        return CONTINUE_CONVERSATION
+
 def main():
     application = Application.builder().token(TELEGRAM_API_KEY).build()
 
@@ -582,7 +625,10 @@ def main():
             SELECT_LEVEL: [CallbackQueryHandler(select_level)],
             SELECT_TOPIC: [CallbackQueryHandler(select_topic)],
             SEND_VOCABULARY: [CallbackQueryHandler(continue_question)],
-            CONTINUE_CONVERSATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, continue_conversation)],
+            CONTINUE_CONVERSATION: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, continue_conversation),
+                MessageHandler(filters.VOICE, handle_audio_message)  # Add handler for audio messages
+            ],
             CHOOSING_COUNTRY: [CallbackQueryHandler(process_country_selection)],
         },
         fallbacks=[CommandHandler("cancel", cancel)]
