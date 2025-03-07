@@ -54,12 +54,12 @@ def get_topic_menu():
 
 def get_level_menu():
     keyboard = [
-        [InlineKeyboardButton("Beginner", callback_data="a1")],
+        # [InlineKeyboardButton("Beginner", callback_data="a1")],
         [InlineKeyboardButton("Elementary", callback_data="a2")],
         [InlineKeyboardButton("Pre-intermediate", callback_data="a2+")],
          [InlineKeyboardButton("Intermediate", callback_data="B1")],
          [InlineKeyboardButton("Upper-intermediate", callback_data="B2")],
-         [InlineKeyboardButton("Advanced", callback_data="c1")]
+        #  [InlineKeyboardButton("Advanced", callback_data="c1")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -248,13 +248,11 @@ You are a Spanish language teacher. Below is the conversation history with a stu
 
 Based on the conversation, please provide detailed and constructive feedback in Russian to help the student improve their Spanish. Your feedback should include:
 
-1. Strengths: Highlight at least two strengths in the student's language usage.
-2. Areas for Improvement: Point out any mistakes or areas for improvement (e.g., grammar, vocabulary, syntax) and provide corrections.
-3. New Vocabulary: Recommend two or three new words or phrases the student could learn, along with their translations.
+1. Areas for Improvement: Point out any mistakes or areas for improvement (e.g., grammar, vocabulary, syntax) and provide corrections.
+2. New Vocabulary: Recommend two or three new words or phrases the student could learn, along with their translations.
 
 Example output:
 
-<b>Сильные стороны:</b> Вы продемонстрировали четкую структуру предложения и эффективное использование прилагательных.
 <b>Над чем работать:</b> Будьте осторожны с глагольными спряжениями; например, используйте "me gusta" вместо "yo gustar".
 <b>Новые слова:</b> 
 desafiante: испытывающий,
@@ -492,6 +490,10 @@ async def continue_question(update: Update, context: CallbackContext) -> int:
     return CONTINUE_CONVERSATION  # Return to the conversation state
 
 async def continue_conversation(update: Update, context: CallbackContext) -> int:
+    
+    #send typing action
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+    
     # Check if there's transcribed text available
     user_text = context.user_data.pop('transcribed_text', None)
     
@@ -588,6 +590,10 @@ async def play_audio(update: Update, context: CallbackContext) -> None:
         await query.message.reply_text("Audio file not found.")
 
 async def handle_audio_message(update: Update, context: CallbackContext) -> int:
+
+    #send typing action
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+    
     """Handle incoming audio messages."""
     logger.info("Received an audio message.")
     audio_file = await update.message.voice.get_file()
