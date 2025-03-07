@@ -490,8 +490,7 @@ async def continue_question(update: Update, context: CallbackContext) -> int:
     return CONTINUE_CONVERSATION  # Return to the conversation state
 
 async def continue_conversation(update: Update, context: CallbackContext) -> int:
-    
-    #send typing action
+    # Send typing action
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
     
     # Check if there's transcribed text available
@@ -508,6 +507,8 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
     logger.info("Stored user text in message history.")
 
     chat_history = context.user_data.get("message_history", [])
+    # Get only the most recent message for analysis
+    current_message = user_text
 
     turns = context.user_data.get("turns", 0)
     max_turns = 5
@@ -528,7 +529,8 @@ async def continue_conversation(update: Update, context: CallbackContext) -> int
         word = words[word_index][0]  # Assuming the word is the first element in the tuple
 
         # Generate chatbot response with feedback and follow-up
-        response = await conversation_response(user_text, convo_topic, chat_history, word)
+        # Pass the current message instead of the entire chat history for correction
+        response = await conversation_response(current_message, convo_topic, chat_history, word)
         if response:
             # Increase turn count and store it back in user_data
             context.user_data["turns"] = turns + 1
@@ -590,7 +592,6 @@ async def play_audio(update: Update, context: CallbackContext) -> None:
         await query.message.reply_text("Audio file not found.")
 
 async def handle_audio_message(update: Update, context: CallbackContext) -> int:
-
     #send typing action
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
     
@@ -632,9 +633,9 @@ async def handle_audio_message(update: Update, context: CallbackContext) -> int:
         logger.info(f"Transcribed text: {user_text}")
 
         if user_text:
-            # Store the converted text in the message history
-            store_message_history(update.message.from_user.id, user_text, context)
-            logger.info("Stored transcribed text in message history.")
+            # Store the transcribed text directly in user_data for the continue_conversation function
+            context.user_data['transcribed_text'] = user_text
+            logger.info("Stored transcribed text for processing.")
             return await continue_conversation(update, context)
         else:
             await update.message.reply_text("Не удалось распознать аудио. Пожалуйста, попробуйте еще раз.")
