@@ -122,9 +122,10 @@ Use the word: "{word}"
 Instructions:
 1. Analyze the student's reply. If there are any mistakes, provide corrections; otherwise, leave the correction field empty.
 2. Ask a follow-up question in Spanish that continues the conversation, taking into account the above context and using the word "{word}".
-3. Translate the follow-up question into Russian.
-4. Provide a hint for the student on how to respond in Spanish.
-5. Translate the hint into Russian.
+3. If the student reply's with a question, answer it.
+4. Translate the follow-up question into Russian.
+5. Provide a hint for the student on how to respond in Spanish.
+6. Translate the hint into Russian.
 
 Please return your answer as a valid JSON object with the following keys:
 - "correction"
@@ -153,6 +154,17 @@ Example output on input from student without mistake:
   "correction": "ответ без ошибок :) ",
   "question": "¿Qué opinas de ...?",
   "question_translation": "Что вы думаете об ...?",
+  "hint": "||Yo pienso que ...||",
+  "hint_translation": "||я думаю что ...||"
+}}
+
+Example input from student with a question: Que tipos de hoteles hay?
+
+Example output on input from student with a question:
+{{
+  "correction": "ответ без ошибок :) ",
+  "question": "Hay hoteles de 3 estrellas, 4 estrellas y 5 estrellas.",
+  "question_translation": "Есть отели на 3 звезды, 4 звезды и 5 звезд.",
   "hint": "||Yo pienso que ...||",
   "hint_translation": "||я думаю что ...||"
 }}
@@ -480,13 +492,18 @@ async def continue_question(update: Update, context: CallbackContext) -> int:
     return CONTINUE_CONVERSATION  # Return to the conversation state
 
 async def continue_conversation(update: Update, context: CallbackContext) -> int:
-    print("start generating response function")
+    # Check if there's transcribed text available
+    user_text = context.user_data.pop('transcribed_text', None)
+    
+    if not user_text:
+        # If no transcribed text, use the text from the message
+        user_text = update.message.text
 
-    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+    logger.info(f"Using user text: {user_text}")
 
-    # First, store the message
-    user_text = update.message.text
+    # Store the message in history
     store_message_history(update.message.from_user.id, user_text, context)
+    logger.info("Stored user text in message history.")
 
     chat_history = context.user_data.get("message_history", [])
 
@@ -572,39 +589,50 @@ async def play_audio(update: Update, context: CallbackContext) -> None:
 
 async def handle_audio_message(update: Update, context: CallbackContext) -> int:
     """Handle incoming audio messages."""
+    logger.info("Received an audio message.")
     audio_file = await update.message.voice.get_file()
-    file_path = await audio_file.download()
+    
+    # Download the file as a byte array
+    audio_content = await audio_file.download_as_bytearray()
+    logger.info("Audio file downloaded as byte array.")
 
     try:
         # Specify the path to your service account JSON file
-        credentials_path = os.path.join("config", "your-service-account-file.json")
+        credentials_path = os.path.join("config", "google-service-file.json")
+        logger.info(f"Using credentials from {credentials_path}")
 
         # Convert audio to text using Google Speech-to-Text
         client = speech.SpeechClient.from_service_account_file(credentials_path)
+        logger.info("Initialized Google Speech-to-Text client.")
 
-        with open(file_path, "rb") as audio:
-            audio_content = audio.read()
+        # Convert bytearray to bytes
+        audio_content_bytes = bytes(audio_content)
+        logger.info("Converted bytearray to bytes.")
 
-        audio = speech.RecognitionAudio(content=audio_content)
+        audio = speech.RecognitionAudio(content=audio_content_bytes)
         config = speech.RecognitionConfig(
             encoding=speech.RecognitionConfig.AudioEncoding.OGG_OPUS,
-            sample_rate_hertz=16000,  # Adjust this based on your audio file's sample rate
+            sample_rate_hertz=48000,  # Adjust this based on your audio file's sample rate
             language_code="es-ES",  # Spanish language code
         )
+        logger.info("Configured audio recognition settings.")
 
         response = client.recognize(config=config, audio=audio)
+        logger.info(f"Received response from Google Speech-to-Text: {response}")
 
         user_text = ""
         for result in response.results:
             user_text += result.alternatives[0].transcript
+        logger.info(f"Transcribed text: {user_text}")
 
         if user_text:
             # Store the converted text in the message history
             store_message_history(update.message.from_user.id, user_text, context)
-            # Continue the conversation with the converted text
+            logger.info("Stored transcribed text in message history.")
             return await continue_conversation(update, context)
         else:
             await update.message.reply_text("Не удалось распознать аудио. Пожалуйста, попробуйте еще раз.")
+            logger.warning("No transcribed text was returned.")
             return CONTINUE_CONVERSATION
     except Exception as e:
         logger.error(f"Error processing audio message: {e}")
