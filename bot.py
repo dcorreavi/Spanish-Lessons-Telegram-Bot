@@ -165,8 +165,8 @@ Example output on input from student with a question:
   "correction": "ответ без ошибок :) ",
   "question": "Hay hoteles de 3 estrellas, 4 estrellas y 5 estrellas.",
   "question_translation": "Есть отели на 3 звезды, 4 звезды и 5 звезд.",
-  "hint": "||Yo pienso que ...||",
-  "hint_translation": "||я думаю что ...||"
+  "hint": "|| ||",
+  "hint_translation": "|| ||"
 }}
 """
 
