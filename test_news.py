@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from dotenv import load_dotenv  # <-- Add this
 load_dotenv()  # <-- Add this
+import _pickle
 
 telegram_bot_token =  os.getenv("TELEGRAM_API_KEY")
 telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
@@ -31,7 +32,12 @@ def load_processed_articles():
     try:
         with open(PROCESSED_ARTICLES_FILE, 'rb') as f:
             return pickle.load(f)
-    except (FileNotFoundError, EOFError):
+    except (FileNotFoundError, EOFError, _pickle.UnpicklingError):
+        # If any error occurs (file not found, EOF, or unpickling error),
+        # return an empty set and create a new file
+        print(f"Error loading {PROCESSED_ARTICLES_FILE}. Creating new file.")
+        with open(PROCESSED_ARTICLES_FILE, 'wb') as f:
+            pickle.dump(set(), f)
         return set()
 
 # Save the processed articles to a file
