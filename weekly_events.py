@@ -24,59 +24,55 @@ async def generate_weekly_events():
     Target audience: expats and backpackers in Colombia. Include engaging images if possible. Split the events by the city they take place in.
     Do not repeat mention that the events are targeted for expats and backpackers in your text. If one event is happening on different dates, do not list them as two different events.
     
-    Send message in json format. Below is an example:
+    IMPORTANT: Format the message using ONLY these supported HTML tags:
+    - Use <b>text</b> for bold text
+    - Use <i>text</i> for italic text
+    - Use <a href="URL">text</a> for links
+    - Use <code>text</code> for monospace text
+    - Use <pre>text</pre> for pre-formatted text
     
-    Here’s a list of the upcoming events happening in Colombia this week!  
-
-    <b>Medellin</b><br><br>
-    <b>1. Medellin Flower Festival</b><br>
-    <b>Location:</b> Various locations across Medellin<br>
-    <b>Dates:</b> 2024-03-15 10:00:00<br>
-    <b>Description:</b> Experience the vibrant culture of Medellin during its annual Flower Festival...
+    DO NOT use <br> tags or any other HTML tags not listed above.
+    DO NOT use markdown formatting (** or *).
     
-
-
-    <b>2. Event 2</b><br>
-    <b>Location:</b> <br>
-    <b>Dates:</b> <br>
-    <b>Description:</b> 
+    Example format:
     
-  
+    Here's a list of the upcoming events happening in Colombia this week!<pre>
 
-    <b>2. Event 3</b><br>
-    <b>Location:</b> <br>
-    <b>Dates:</b> <br>
-    <b>Description:</b>  
-    
+<b>Medellin</b>
 
-    ---
+<b>1. Medellin Flower Festival</b>
+<b>Location:</b> Various locations across Medellin
+<b>Dates:</b> 2024-03-15 10:00:00
+<b>Description:</b> Experience the vibrant culture of Medellin during its annual Flower Festival...
 
-    <b>Bogota</b><br><br>
+<b>2. Event 2</b>
+<b>Location:</b> 
+<b>Dates:</b> 
+<b>Description:</b> 
 
-    <b>2. Event 1</b><br>
-    <b>Location:</b> <br>
-    <b>Dates:</b> <br>
-    <b>Description:</b> 
-    
-  
+<b>Bogota</b>
 
-    <b>2. Event 2</b><br>
-    <b>Location:</b> <br>
-    <b>Dates:</b> <br>
-    <b>Description:</b>  
-    
-   <b>Cali</b><br><br>
+<b>1. Event 1</b>
+<b>Location:</b> 
+<b>Dates:</b> 
+<b>Description:</b> 
 
-   <b>Barranquilla</b><br><br>
+<b>2. Event 2</b>
+<b>Location:</b> 
+<b>Dates:</b> 
+<b>Description:</b> 
 
-   <b>Santa Marta</b><br><br>
+<b>Barranquilla</b>
 
-   <b>Pereira</b><br><br>
+<b>Cali</b>
 
-   <b>Manizales</b><br><br>
+<b>Santa Marta</b>
 
-   <b>Armenia</b><br><br>
-   
+<b>Pereira</b>
+
+<b>Manizales</b>
+
+<b>Armenia</b></pre>
     """
     response = await client.chat.completions.create(
         model="gpt-4o-search-preview",
