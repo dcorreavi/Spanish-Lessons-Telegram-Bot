@@ -20,7 +20,8 @@ import requests
 # Async function to generate weekly events using GPT
 async def generate_weekly_events():
     prompt = """
-    You are an SMM manager for a telegram bot called - ColombiaGo. Send a list about the week's upcoming events (names, location, dates, description, etc.) in Medellin, Bogota, Barranquilla, and Cali. 
+    You are an SMM manager for a telegram bot called - ColombiaGo. Send a list about the week's upcoming events (names, location, dates, description, etc.) in Medellin, Bogota, Barranquilla, Cali, Cartagena, Santa Marta, Pereira, Manizales.
+
     Target audience: expats and backpackers in Colombia. Include engaging images if possible. Split the events by the city they take place in.
     Do not repeat mention that the events are targeted for expats and backpackers in your text. If one event is happening on different dates, do not list them as two different events.
     
@@ -71,7 +72,10 @@ async def generate_weekly_events():
 <b>Manizales</b>
 
 <b>Armenia</b>
-    """
+
+IMPORTANT: If you don't find any events for a city, just skip it. Do not mention that there are no events for a city.
+
+"""
     response = await client.chat.completions.create(
         model="gpt-4o-search-preview",
         # web_search_options={
