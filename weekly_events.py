@@ -118,13 +118,13 @@ async def generate_weekly_events():
     """
     response = await client.chat.completions.create(
         model="gpt-4o-search-preview",
-        web_search_options={
-            "search_context_size":"medium",
-            "user_location":{
-                "country":"CO",
-                "city":"Medellin, Bogota, Barranquilla, Cali, Cartagena, Santa Marta, Pereira, Manizales, Armenia, Bello, Envigado, La Ceja, Rionegro, Sabaneta"
-            }
-        },
+        # web_search_options={
+        #     "search_context_size":"medium",
+        #     "user_location":{
+        #         "country":"CO",
+        #         "city":"Medellin, Bogota, Barranquilla, Cali, Cartagena, Santa Marta, Pereira, Manizales, Armenia, Bello, Envigado, La Ceja, Rionegro, Sabaneta"
+        #     }
+        # },
         messages=[{"role": "user", "content": prompt}],
         max_tokens=800,
         temperature=0.9  # Increase temperature for more creative response
