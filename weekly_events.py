@@ -28,93 +28,55 @@ async def generate_weekly_events():
     
     Here’s a list of the upcoming events happening in Colombia this week!  
 
-    **Medellin**
+    <b>Medellin</b><br><br>
+    <b>1. Medellin Flower Festival</b><br>
+    <b>Location:</b> Various locations across Medellin<br>
+    <b>Dates:</b> 2024-03-15 10:00:00<br>
+    <b>Description:</b> Experience the vibrant culture of Medellin during its annual Flower Festival...
+    
 
-    **1. Medellin Flower Festival**  
-    **Location:** Various locations across Medellin  
-    **Dates:** returned in a clear, consistent format—like ISO 8601 (YYYY-MM-DD HH:MM:SS)
-    **Description:** Experience the vibrant culture of Medellin during its annual Flower Festival, featuring stunning floral displays, live music, parades, and cultural events that celebrate the region's rich heritage.  
 
-
-
-    **2. Event 2**
-    **Location:** 
-    **Dates:** 
-    **Description:** 
+    <b>2. Event 2</b><br>
+    <b>Location:</b> <br>
+    <b>Dates:</b> <br>
+    <b>Description:</b> 
+    
   
 
-    **3. Event 3**
-    **Location:** 
-    **Dates:** 
-    **Description:** 
+    <b>2. Event 3</b><br>
+    <b>Location:</b> <br>
+    <b>Dates:</b> <br>
+    <b>Description:</b>  
     
 
     ---
 
-    **Bogota**
+    <b>Bogota</b><br><br>
 
-    **2. Festival de Verano (Summer Festival)**  
-    **Location:** Parque Simón Bolívar  
-    **Dates:** returned in a clear, consistent format—like ISO 8601 (YYYY-MM-DD HH:MM:SS)
-    **Description:** Join the locals for a weekend of music, art, and outdoor activities at the biggest summer festival in Bogota. Featuring international artists, food stalls, and exciting workshops suitable for all ages.  
-
-
-    **2. Event 2**
-    **Location:** 
-    **Dates:** 
-    **Description:**
-   
-
-    **3. Event 3**
-    **Location:** 
-    **Dates:** 
-    **Description:** 
+    <b>2. Event 1</b><br>
+    <b>Location:</b> <br>
+    <b>Dates:</b> <br>
+    <b>Description:</b> 
     
+  
 
-    ---
-
-    **Barranquilla**
-
-    **3. Carnival of Barranquilla – Pre-Carnival Events**  
-    **Location:** Various locations in Barranquilla  
-    **Dates:** returned in a clear, consistent format—like ISO 8601 (YYYY-MM-DD HH:MM:SS)
-    **Description:** Leading up to the famous Carnival, enjoy vibrant pre-carnival events showcasing traditional dance, music, and colorful parades that set the stage for the larger celebration.  
-
-
-    **2. Event 2**
-    **Location:** 
-    **Dates:** 
-    **Description:** 
-   
-
-    **3. Event 3**
-    **Location:** 
-    **Dates:** 
-    **Description:** 
+    <b>2. Event 2</b><br>
+    <b>Location:</b> <br>
+    <b>Dates:</b> <br>
+    <b>Description:</b>  
     
+   <b>Cali</b><br><br>
 
-    ---
+   <b>Barranquilla</b><br><br>
 
-    **Cali**
+   <b>Santa Marta</b><br><br>
 
-    **4. Cali Fair**  
-    **Location:** Various locations in Cali  
-    **Dates:** returned in a clear, consistent format—like ISO 8601 (YYYY-MM-DD HH:MM:SS)
-    **Description:** A spectacular celebration of Cali's culture with concerts, dance performances, food markets, and a variety of activities highlighting the city’s rich traditions and nightlife.  
+   <b>Pereira</b><br><br>
+
+   <b>Manizales</b><br><br>
+
+   <b>Armenia</b><br><br>
    
-
-    **2. Event 2**
-    **Location:** 
-    **Dates:** 
-    **Description:**
-   
-
-    **3. Event 3**
-    **Location:** 
-    **Dates:** 
-    **Description:**
-   
-
     """
     response = await client.chat.completions.create(
         model="gpt-4o-search-preview",
