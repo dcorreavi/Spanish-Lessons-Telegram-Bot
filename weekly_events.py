@@ -28,15 +28,13 @@ async def generate_weekly_events():
     - Use <b>text</b> for bold text
     - Use <i>text</i> for italic text
     - Use <a href="URL">text</a> for links
-    - Use <code>text</code> for monospace text
-    - Use <pre>text</pre> for pre-formatted text
     
-    DO NOT use <br> tags or any other HTML tags not listed above.
+    DO NOT use any other HTML tags.
     DO NOT use markdown formatting (** or *).
     
     Example format:
     
-    Here's a list of the upcoming events happening in Colombia this week!<pre>
+    Here's a list of the upcoming events happening in Colombia this week!
 
 <b>Medellin</b>
 
@@ -72,7 +70,7 @@ async def generate_weekly_events():
 
 <b>Manizales</b>
 
-<b>Armenia</b></pre>
+<b>Armenia</b>
     """
     response = await client.chat.completions.create(
         model="gpt-4o-search-preview",
