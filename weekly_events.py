@@ -126,8 +126,7 @@ async def generate_weekly_events():
         #     }
         # },
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=800,
-        temperature=0.9  # Increase temperature for more creative response
+        max_tokens=800
     )
     
     weekly_events_raw = response.choices[0].message.content.strip()
