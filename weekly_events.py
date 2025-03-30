@@ -42,7 +42,7 @@ async def generate_weekly_events():
 <b>1. Medellin Flower Festival</b>
 <b>Location:</b> Various locations across Medellin
 <b>Dates:</b> 2024-03-15 10:00:00
-<b>Description:</b> Experience the vibrant culture of Medellin during its annual Flower Festival...
+<b>Description:</b> Experience the vibrant culture of Medellin during its annual Flower Festival. <a href="https://example.com">Read more</a>
 
 <b>2. Event 2</b>
 <b>Location:</b> 
