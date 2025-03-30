@@ -25,13 +25,30 @@ async def generate_weekly_events():
     Target audience: expats and backpackers in Colombia. Include engaging images if possible. Split the events by the city they take place in.
     Do not repeat mention that the events are targeted for expats and backpackers in your text. If one event is happening on different dates, do not list them as two different events.
     
-    IMPORTANT: Format the message using ONLY these supported HTML tags:
-    - Use <b>text</b> for bold text
-    - Use <i>text</i> for italic text
-    - Use <a href="URL">text</a> for links
-    
-    DO NOT use any other HTML tags.
-    DO NOT use markdown formatting (** or *).
+   VERY IMPORTANT FORMATTING RULES:
+    1. When including URLs, ALWAYS use this exact format: <a href="URL">Read more here</a>
+    2. NEVER show raw URLs in parentheses like this: (example.com)
+    3. NEVER show URLs in square brackets like this: [example.com]
+    4. DO NOT include source citations at the end of descriptions
+    5. Integrate any source references naturally into the text using HTML link tags
+
+    Example of CORRECT format:
+    <b>1. Event Name</b>
+    <b>Location:</b> Event Location
+    <b>Dates:</b> Event Dates
+    <b>Description:</b> Event description text. <a href="https://example.com">Read more here</a>
+
+    Example of INCORRECT format (DO NOT USE):
+    1. Event Name
+    Location: Event Location
+    Dates: Event Dates
+    Description: Event description text (source: example.com)
+
+
+    Use ONLY these HTML tags:
+    - <b>text</b> for bold
+    - <i>text</i> for italic
+    - <a href="URL">text</a> for links
     
     Example format:
     
@@ -42,7 +59,8 @@ async def generate_weekly_events():
 <b>1. Medellin Flower Festival</b>
 <b>Location:</b> Various locations across Medellin
 <b>Dates:</b> 2024-03-15 10:00:00
-<b>Description:</b> Experience the vibrant culture of Medellin during its annual Flower Festival. <a href="https://example.com">Read more</a>
+<b>Description:</b> Event description text. <a href="https://example.com">Read more here</a>
+
 
 <b>2. Event 2</b>
 <b>Location:</b> 
@@ -78,18 +96,23 @@ IMPORTANT: If you don't find any events for a city, just skip it. Do not mention
 """
     response = await client.chat.completions.create(
         model="gpt-4o-search-preview",
-        # web_search_options={
-        #     "search_context_size":"medium",
-        #     "user_location":{
-        #         "country":"CO",
-        #         "city":"Medellin, Bogota, Barranquilla, Cali, Cartagena, Santa Marta, Pereira, Manizales, Armenia, Bello, Envigado, La Ceja, Rionegro, Sabaneta"
-        #     }
-        # },
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that always formats URLs using HTML anchor tags and never shows raw URLs in parentheses or brackets."},
+            {"role": "user", "content": prompt}
+        ],
         max_tokens=800
     )
     
     weekly_events_raw = response.choices[0].message.content.strip()
+    
+    # Post-process the response to clean up any remaining parenthetical URLs
+    import re
+    
+    # Remove URLs in parentheses with their source citations
+    weekly_events_raw = re.sub(r'\s*\([^)]*(?:http|www)[^)]*\)', '', weekly_events_raw)
+    # Remove square bracket citations
+    weekly_events_raw = re.sub(r'\s*\[[^]]*(?:http|www)[^]]*\]', '', weekly_events_raw)
+    
     print("Raw response content:", weekly_events_raw)
     return weekly_events_raw
 
