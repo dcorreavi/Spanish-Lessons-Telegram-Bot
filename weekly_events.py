@@ -122,7 +122,8 @@ def send_message_telegram(bot_token, chat_id, message):
     payload = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "HTML"
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True
     }
     try:
         response = requests.post(url, data=payload)
